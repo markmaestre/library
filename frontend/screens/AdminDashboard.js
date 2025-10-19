@@ -2,37 +2,70 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
   TextInput,
   Modal,
   Animated,
+  Image,
+  Platform,
+  RefreshControl,
 } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
 import API from "../utils/api";
+import styles from "./AdminDashboard.styles";
+
+// Custom Image Component with Cache Busting
+const CacheBustImage = ({ source, style, ...props }) => {
+  const [imageUri, setImageUri] = useState('');
+
+  useEffect(() => {
+    if (source?.uri) {
+      // Add timestamp to bust cache
+      const uriWithTimestamp = `${source.uri}?t=${Date.now()}`;
+      setImageUri(uriWithTimestamp);
+    }
+  }, [source?.uri]);
+
+  return (
+    <Image
+      source={imageUri ? { uri: imageUri } : source}
+      style={style}
+      {...props}
+    />
+  );
+};
 
 export default function AdminDashboard({ navigation, route }) {
   const name = route.params?.name || "Admin";
   const [activeSection, setActiveSection] = useState("manage");
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [allBorrowRecords, setAllBorrowRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [banModalVisible, setBanModalVisible] = useState(false);
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [editingBook, setEditingBook] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [banReason, setBanReason] = useState("");
   const [fadeAnim] = useState(new Animated.Value(0));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const drawerAnim = useRef(new Animated.Value(-280)).current;
   
   const [formData, setFormData] = useState({
     title: "",
     author: "",
     isbn: "",
-    genre: "",
+    category: "",
     description: "",
     published_year: "",
     publisher: "",
@@ -42,11 +75,7 @@ export default function AdminDashboard({ navigation, route }) {
   });
 
   useEffect(() => {
-    if (activeSection === "manage") {
-      loadBooks();
-    } else if (activeSection === "users") {
-      loadUsers();
-    }
+    loadSectionData();
     animateSectionChange();
   }, [activeSection]);
 
@@ -87,11 +116,48 @@ export default function AdminDashboard({ navigation, route }) {
     closeDrawer();
   };
 
+  const loadSectionData = async () => {
+    try {
+      switch (activeSection) {
+        case "manage":
+          await loadBooks();
+          break;
+        case "users":
+          await loadUsers();
+          break;
+        case "requests":
+          await loadPendingRequests();
+          break;
+        case "borrows":
+          await loadAllBorrowRecords();
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadSectionData();
+    setRefreshing(false);
+  };
+
   const loadBooks = async () => {
     try {
       setLoading(true);
       const response = await API.get("/books/all");
-      setBooks(response.data);
+      
+      // Add cache busting to image URLs
+      const booksWithCacheBust = response.data.map(book => ({
+        ...book,
+        image_url: book.image_url ? book.image_url : null,
+        _version: Date.now() // Force re-render
+      }));
+      
+      setBooks(booksWithCacheBust);
     } catch (error) {
       console.error("Error loading books:", error);
       Alert.alert("Error", "Failed to load books");
@@ -113,12 +179,38 @@ export default function AdminDashboard({ navigation, route }) {
     }
   };
 
+  const loadPendingRequests = async () => {
+    try {
+      setRequestsLoading(true);
+      const response = await API.get("/books/pending-requests");
+      setPendingRequests(response.data);
+    } catch (error) {
+      console.error("Error loading pending requests:", error);
+      Alert.alert("Error", "Failed to load pending requests");
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const loadAllBorrowRecords = async () => {
+    try {
+      setRequestsLoading(true);
+      const response = await API.get("/books/admin/borrow-records");
+      setAllBorrowRecords(response.data);
+    } catch (error) {
+      console.error("Error loading borrow records:", error);
+      Alert.alert("Error", "Failed to load borrow records");
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
       author: "",
       isbn: "",
-      genre: "",
+      category: "",
       description: "",
       published_year: "",
       publisher: "",
@@ -126,6 +218,7 @@ export default function AdminDashboard({ navigation, route }) {
       available_copies: "1",
       image_url: ""
     });
+    setSelectedImage(null);
     setEditingBook(null);
   };
 
@@ -137,34 +230,174 @@ export default function AdminDashboard({ navigation, route }) {
   };
 
   const validateForm = () => {
-    const required = ['title', 'author', 'isbn', 'genre', 'published_year'];
+    const required = ['title', 'author', 'isbn', 'category'];
     for (let field of required) {
       if (!formData[field].trim()) {
         Alert.alert("Error", `${field.replace('_', ' ')} is required`);
         return false;
       }
     }
+    
+    // Validate copies
+    if (parseInt(formData.total_copies) < parseInt(formData.available_copies)) {
+      Alert.alert("Error", "Available copies cannot exceed total copies");
+      return false;
+    }
+    
     return true;
+  };
+
+  // Request permissions for image picker
+  const requestPermissions = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Sorry, we need camera roll permissions to make this work!');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Pick image from gallery
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [3, 4],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+        // Clear the URL input when selecting a new image
+        handleInputChange('image_url', '');
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  // Take photo with camera
+  const takePhoto = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [3, 4],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+        // Clear the URL input when taking a new photo
+        handleInputChange('image_url', '');
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
+
+  // Upload image to server
+  const uploadImage = async (imageUri) => {
+    try {
+      setUploading(true);
+      
+      // Create form data for file upload
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: `book_${Date.now()}.jpg`,
+      });
+
+      // Upload image to the server
+      const uploadResponse = await API.post('/books/upload-image', uploadFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return uploadResponse.data.image_url;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAddBook = async () => {
     if (!validateForm()) return;
 
     try {
-      const bookData = {
-        ...formData,
-        published_year: parseInt(formData.published_year),
-        total_copies: parseInt(formData.total_copies),
-        available_copies: parseInt(formData.available_copies)
-      };
+      setUploading(true);
+      
+      let imageUrl = formData.image_url;
 
-      await API.post("/books/", bookData);
+      // If a new image is selected, upload it first
+      if (selectedImage) {
+        try {
+          imageUrl = await uploadImage(selectedImage);
+        } catch (error) {
+          Alert.alert("Error", "Failed to upload image. Please try again.");
+          setUploading(false);
+          return;
+        }
+      }
+
+      // Create FormData for multipart form submission
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('author', formData.author);
+      formDataToSend.append('isbn', formData.isbn);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('total_copies', formData.total_copies);
+      formDataToSend.append('available_copies', formData.available_copies);
+      
+      if (formData.published_year) {
+        formDataToSend.append('published_year', formData.published_year);
+      }
+      if (formData.publisher) {
+        formDataToSend.append('publisher', formData.publisher);
+      }
+      if (imageUrl) {
+        formDataToSend.append('image_url', imageUrl);
+      }
+
+      // If we have a new image file, append it directly
+      if (selectedImage && !imageUrl) {
+        formDataToSend.append('image', {
+          uri: selectedImage,
+          type: 'image/jpeg',
+          name: `book_${Date.now()}.jpg`,
+        });
+      }
+
+      const response = await API.post("/books/", formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       Alert.alert("Success", "Book added successfully");
       setModalVisible(false);
       resetForm();
-      loadBooks();
+      await loadBooks(); // Wait for reload to complete
     } catch (error) {
+      console.error('Add book error:', error.response?.data);
       Alert.alert("Error", error.response?.data?.detail || "Failed to add book");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -172,31 +405,96 @@ export default function AdminDashboard({ navigation, route }) {
     if (!validateForm() || !editingBook) return;
 
     try {
-      const bookData = {
-        ...formData,
-        published_year: parseInt(formData.published_year),
-        total_copies: parseInt(formData.total_copies),
-        available_copies: parseInt(formData.available_copies)
-      };
+      setUploading(true);
+      
+      let imageUrl = formData.image_url;
 
-      await handleDeleteBook(editingBook._id, false);
-      await API.post("/books/", bookData);
+      // If a new image is selected, upload it first
+      if (selectedImage) {
+        try {
+          imageUrl = await uploadImage(selectedImage);
+        } catch (error) {
+          Alert.alert("Error", "Failed to upload image. Please try again.");
+          setUploading(false);
+          return;
+        }
+      }
+
+      // Create FormData for multipart form submission
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('author', formData.author);
+      formDataToSend.append('isbn', formData.isbn);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('total_copies', formData.total_copies);
+      formDataToSend.append('available_copies', formData.available_copies);
+      
+      if (formData.published_year) {
+        formDataToSend.append('published_year', formData.published_year);
+      }
+      if (formData.publisher) {
+        formDataToSend.append('publisher', formData.publisher);
+      }
+
+      // Always include image_url, even if empty (to clear existing image)
+      formDataToSend.append('image_url', imageUrl || '');
+
+      const response = await API.put(`/books/${editingBook._id}`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       
       Alert.alert("Success", "Book updated successfully");
       setModalVisible(false);
       resetForm();
-      loadBooks();
+      
+      // Force reload books and update state
+      await loadBooks();
+      
+      // Additional cache busting for the updated book
+      setBooks(prevBooks => 
+        prevBooks.map(book => 
+          book._id === editingBook._id 
+            ? { 
+                ...book, 
+                image_url: imageUrl ? `${imageUrl}?t=${Date.now()}` : imageUrl,
+                _version: Date.now() // Force re-render
+              } 
+            : book
+        )
+      );
+      
     } catch (error) {
+      console.error('Update book error:', error.response?.data);
       Alert.alert("Error", error.response?.data?.detail || "Failed to update book");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleDeleteBook = async (bookId, showAlert = true) => {
+  const handleDeleteBook = async (bookId) => {
     try {
       Alert.alert(
         "Delete Book",
-        "Delete functionality needs to be implemented in the backend.",
-        [{ text: "OK" }]
+        "Are you sure you want to delete this book?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Delete", 
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await API.delete(`/books/${bookId}`);
+                Alert.alert("Success", "Book deleted successfully");
+                loadBooks();
+              } catch (error) {
+                Alert.alert("Error", error.response?.data?.detail || "Failed to delete book");
+              }
+            }
+          }
+        ]
       );
     } catch (error) {
       Alert.alert("Error", error.response?.data?.detail || "Failed to delete book");
@@ -231,13 +529,147 @@ export default function AdminDashboard({ navigation, route }) {
     }
   };
 
+  // BORROW REQUEST MANAGEMENT
+  const handleApproveRequest = async (borrowId) => {
+    try {
+      await API.put(`/books/approve-borrow/${borrowId}`);
+      Alert.alert("Success", "Borrow request approved successfully");
+      loadPendingRequests();
+      loadBooks(); // Refresh books to update available copies
+    } catch (error) {
+      console.error('Approve request error:', error.response?.data);
+      Alert.alert("Error", error.response?.data?.detail || "Failed to approve request");
+    }
+  };
+
+  const handleRejectRequest = async (borrowId) => {
+    try {
+      Alert.alert(
+        "Reject Request",
+        "Are you sure you want to reject this borrow request?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Reject", 
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await API.put(`/books/reject-borrow/${borrowId}`);
+                Alert.alert("Success", "Borrow request rejected");
+                loadPendingRequests();
+              } catch (error) {
+                Alert.alert("Error", error.response?.data?.detail || "Failed to reject request");
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert("Error", error.response?.data?.detail || "Failed to reject request");
+    }
+  };
+
+  // STATUS MANAGEMENT
+  const handleUpdateStatus = async (borrowId, newStatus) => {
+    try {
+      let endpoint = '';
+      let payload = {};
+
+      switch (newStatus) {
+        case 'approved':
+          endpoint = `/books/approve-borrow/${borrowId}`;
+          break;
+        case 'rejected':
+          endpoint = `/books/reject-borrow/${borrowId}`;
+          break;
+        case 'returned':
+          // For marking as returned, we need to call the return endpoint
+          endpoint = '/books/return';
+          payload = { borrow_id: borrowId };
+          break;
+        default:
+          Alert.alert("Error", "Invalid status");
+          return;
+      }
+
+      if (newStatus === 'returned') {
+        await API.post(endpoint, payload);
+      } else {
+        await API.put(endpoint);
+      }
+
+      Alert.alert("Success", `Status updated to ${newStatus}`);
+      setStatusModalVisible(false);
+      setSelectedRecord(null);
+      
+      // Refresh data
+      if (activeSection === 'requests') {
+        loadPendingRequests();
+      } else {
+        loadAllBorrowRecords();
+      }
+      loadBooks();
+      
+    } catch (error) {
+      console.error('Update status error:', error.response?.data);
+      Alert.alert("Error", error.response?.data?.detail || "Failed to update status");
+    }
+  };
+
+  const openStatusModal = (record) => {
+    setSelectedRecord(record);
+    setStatusModalVisible(true);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending": return "#FFA500";
+      case "borrowed": return "#007AFF";
+      case "overdue": return "#FF3B30";
+      case "returned": return "#34C759";
+      case "rejected": return "#FF3B30";
+      default: return "#8E8E93";
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "pending": return "Pending Approval";
+      case "borrowed": return "Borrowed";
+      case "overdue": return "Overdue";
+      case "returned": return "Returned";
+      case "rejected": return "Rejected";
+      default: return status;
+    }
+  };
+
+  const getAvailableStatusOptions = (currentStatus) => {
+    switch (currentStatus) {
+      case 'pending':
+        return [
+          { value: 'approved', label: 'Approve', color: '#34C759' },
+          { value: 'rejected', label: 'Reject', color: '#FF3B30' }
+        ];
+      case 'borrowed':
+        return [
+          { value: 'returned', label: 'Mark as Returned', color: '#34C759' }
+        ];
+      case 'overdue':
+        return [
+          { value: 'returned', label: 'Mark as Returned', color: '#34C759' }
+        ];
+      default:
+        return [];
+    }
+  };
+
   const openEditModal = (book) => {
     setEditingBook(book);
     setFormData({
       title: book.title || "",
       author: book.author || "",
       isbn: book.isbn || "",
-      genre: book.genre || "",
+      category: book.category || "",
       description: book.description || "",
       published_year: book.published_year?.toString() || "",
       publisher: book.publisher || "",
@@ -245,6 +677,7 @@ export default function AdminDashboard({ navigation, route }) {
       available_copies: book.available_copies?.toString() || "1",
       image_url: book.image_url || ""
     });
+    setSelectedImage(null); // Reset selected image when editing
     setModalVisible(true);
   };
 
@@ -257,6 +690,16 @@ export default function AdminDashboard({ navigation, route }) {
     setSelectedUser(user);
     setBanReason("");
     setBanModalVisible(true);
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+  };
+
+  // Add this function to handle image URL input separately
+  const handleImageUrlInput = (url) => {
+    handleInputChange('image_url', url);
+    setSelectedImage(null); // Clear selected image when URL is entered
   };
 
   const renderManageBooks = () => (
@@ -283,9 +726,21 @@ export default function AdminDashboard({ navigation, route }) {
       ) : (
         <View style={styles.booksGrid}>
           {books.map((book) => (
-            <View key={book._id} style={styles.bookCard}>
+            <View key={book._id + (book._version || '')} style={styles.bookCard}>
               <View style={styles.bookSpine} />
               <View style={styles.bookContent}>
+                {book.image_url ? (
+                  <CacheBustImage 
+                    source={{ uri: book.image_url }} 
+                    style={styles.bookImage}
+                    resizeMode="cover"
+                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                  />
+                ) : (
+                  <View style={styles.bookImagePlaceholder}>
+                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                  </View>
+                )}
                 <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
                 <Text style={styles.bookAuthor}>by {book.author}</Text>
                 <View style={styles.divider} />
@@ -295,9 +750,9 @@ export default function AdminDashboard({ navigation, route }) {
                     <Text style={styles.detailValue}>{book.isbn}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Genre</Text>
+                    <Text style={styles.detailLabel}>Category</Text>
                     <View style={styles.genrePill}>
-                      <Text style={styles.genreText}>{book.genre}</Text>
+                      <Text style={styles.genreText}>{book.category}</Text>
                     </View>
                   </View>
                   <View style={styles.detailRow}>
@@ -435,6 +890,221 @@ export default function AdminDashboard({ navigation, route }) {
     </Animated.View>
   );
 
+  const renderPendingRequests = () => (
+    <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.headerAccent} />
+        <Text style={styles.sectionTitle}>Pending Borrow Requests</Text>
+        <TouchableOpacity style={styles.refreshButton} onPress={loadPendingRequests}>
+          <Text style={styles.refreshButtonText}>Refresh</Text>
+        </TouchableOpacity>
+      </View>
+
+      {requestsLoading ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading requests...</Text>
+        </View>
+      ) : pendingRequests.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No pending requests</Text>
+          <Text style={styles.emptyStateSubtext}>
+            All borrow requests have been processed
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.booksGrid}>
+          {pendingRequests.map((request) => (
+            <View key={request._id} style={styles.bookCard}>
+              <View style={[styles.bookSpine, { backgroundColor: getStatusColor(request.status) }]} />
+              <View style={styles.bookContent}>
+                {request.book?.image_url ? (
+                  <CacheBustImage 
+                    source={{ uri: request.book.image_url }} 
+                    style={styles.bookImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.bookImagePlaceholder}>
+                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                  </View>
+                )}
+                <Text style={styles.bookTitle} numberOfLines={2}>{request.book?.title}</Text>
+                <Text style={styles.bookAuthor}>by {request.book?.author}</Text>
+                <View style={styles.divider} />
+                <View style={styles.bookDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Requested By</Text>
+                    <Text style={styles.detailValue}>{request.user_name}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Email</Text>
+                    <Text style={styles.detailValue}>{request.user_email}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Request Date</Text>
+                    <Text style={styles.detailValue}>
+                      {new Date(request.request_date).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.detailRow}
+                    onPress={() => openStatusModal(request)}
+                  >
+                    <Text style={styles.detailLabel}>Status</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
+                      <Text style={styles.statusText}>{getStatusText(request.status)}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  {request.book && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Available Copies</Text>
+                      <Text style={styles.detailValue}>
+                        {request.book.available_copies}/{request.book.total_copies}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.bookActions}>
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.approveButton]}
+                    onPress={() => handleApproveRequest(request._id)}
+                  >
+                    <Text style={styles.buttonText}>Approve</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.rejectButton]}
+                    onPress={() => handleRejectRequest(request._id)}
+                  >
+                    <Text style={styles.buttonText}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+    </Animated.View>
+  );
+
+  const renderAllBorrows = () => (
+    <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.headerAccent} />
+        <Text style={styles.sectionTitle}>All Borrow Records</Text>
+        <TouchableOpacity style={styles.refreshButton} onPress={loadAllBorrowRecords}>
+          <Text style={styles.refreshButtonText}>Refresh</Text>
+        </TouchableOpacity>
+      </View>
+
+      {requestsLoading ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading borrow records...</Text>
+        </View>
+      ) : allBorrowRecords.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No borrow records found</Text>
+        </View>
+      ) : (
+        <View style={styles.booksGrid}>
+          {allBorrowRecords.map((record) => (
+            <View key={record._id} style={styles.bookCard}>
+              <View style={[styles.bookSpine, { backgroundColor: getStatusColor(record.status) }]} />
+              <View style={styles.bookContent}>
+                {record.book?.image_url ? (
+                  <CacheBustImage 
+                    source={{ uri: record.book.image_url }} 
+                    style={styles.bookImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.bookImagePlaceholder}>
+                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                  </View>
+                )}
+                <Text style={styles.bookTitle} numberOfLines={2}>{record.book?.title}</Text>
+                <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
+                <View style={styles.divider} />
+                <View style={styles.bookDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Borrowed By</Text>
+                    <Text style={styles.detailValue}>{record.user_name}</Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.detailRow}
+                    onPress={() => openStatusModal(record)}
+                  >
+                    <Text style={styles.detailLabel}>Status</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(record.status) }]}>
+                      <Text style={styles.statusText}>{getStatusText(record.status)}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  {record.request_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Requested</Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.request_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {record.borrow_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Borrowed</Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.borrow_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {record.due_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Due Date</Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.due_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {record.return_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Returned</Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.return_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {record.fine_amount > 0 && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Fine</Text>
+                      <Text style={[styles.detailValue, styles.fineText]}>
+                        ${record.fine_amount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                
+                {/* Show action buttons for active borrows */}
+                {(record.status === 'borrowed' || record.status === 'overdue') && (
+                  <View style={styles.bookActions}>
+                    <TouchableOpacity 
+                      style={[styles.actionButton, styles.returnButton]}
+                      onPress={() => handleUpdateStatus(record._id, 'returned')}
+                    >
+                      <Text style={styles.buttonText}>Mark Returned</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+    </Animated.View>
+  );
+
   const renderStatistics = () => (
     <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
       <View style={styles.sectionHeader}>
@@ -494,6 +1164,24 @@ export default function AdminDashboard({ navigation, route }) {
           </Text>
           <Text style={styles.statLabel}>Banned Users</Text>
         </View>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Text style={styles.statIcon}>⏳</Text>
+          </View>
+          <Text style={styles.statNumber}>
+            {pendingRequests.length}
+          </Text>
+          <Text style={styles.statLabel}>Pending Requests</Text>
+        </View>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Text style={styles.statIcon}>📋</Text>
+          </View>
+          <Text style={styles.statNumber}>
+            {allBorrowRecords.length}
+          </Text>
+          <Text style={styles.statLabel}>Total Borrows</Text>
+        </View>
       </View>
     </Animated.View>
   );
@@ -504,6 +1192,10 @@ export default function AdminDashboard({ navigation, route }) {
         return renderManageBooks();
       case "users":
         return renderManageUsers();
+      case "requests":
+        return renderPendingRequests();
+      case "borrows":
+        return renderAllBorrows();
       case "stats":
         return renderStatistics();
       case "profile":
@@ -581,6 +1273,29 @@ export default function AdminDashboard({ navigation, route }) {
               Manage Users
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeSection === "requests" && styles.activeMenuItem]}
+            onPress={() => handleMenuPress("requests")}
+          >
+            <Text style={[styles.menuText, activeSection === "requests" && styles.activeMenuText]}>
+              Pending Requests
+              {pendingRequests.length > 0 && (
+                <Text style={styles.notificationBadge}>
+                  {" "}({pendingRequests.length})
+                </Text>
+              )}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeSection === "borrows" && styles.activeMenuItem]}
+            onPress={() => handleMenuPress("borrows")}
+          >
+            <Text style={[styles.menuText, activeSection === "borrows" && styles.activeMenuText]}>
+              All Borrows
+            </Text>
+          </TouchableOpacity>
           
           <TouchableOpacity
             style={[styles.menuItem, activeSection === "stats" && styles.activeMenuItem]}
@@ -616,7 +1331,17 @@ export default function AdminDashboard({ navigation, route }) {
             <Text style={styles.welcomeSubtitle}>Administrator Dashboard</Text>
           </View>
         </View>
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#007AFF']}
+            />
+          }
+        >
           {renderContent()}
         </ScrollView>
       </View>
@@ -635,6 +1360,76 @@ export default function AdminDashboard({ navigation, route }) {
             </Text>
             
             <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
+              {/* Image Selection Section */}
+              <View style={styles.imageSection}>
+                <Text style={styles.sectionLabel}>Book Cover Image</Text>
+                
+                {selectedImage ? (
+                  <View style={styles.selectedImageContainer}>
+                    <Image 
+                      source={{ uri: selectedImage }} 
+                      style={styles.selectedImage}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton}
+                      onPress={removeSelectedImage}
+                    >
+                      <Text style={styles.removeImageText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : formData.image_url ? (
+                  <View style={styles.selectedImageContainer}>
+                    <CacheBustImage 
+                      source={{ uri: formData.image_url }} 
+                      style={styles.selectedImage}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton}
+                      onPress={() => handleImageUrlInput('')}
+                    >
+                      <Text style={styles.removeImageText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Text style={styles.imagePlaceholderText}>No Image Selected</Text>
+                  </View>
+                )}
+
+                <View style={styles.imageButtonsContainer}>
+                  <TouchableOpacity 
+                    style={[styles.imageButton, styles.galleryButton]}
+                    onPress={pickImage}
+                    disabled={uploading}
+                  >
+                    <Text style={styles.imageButtonText}>
+                      {uploading ? "Uploading..." : "Choose from Gallery"}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.imageButton, styles.cameraButton]}
+                    onPress={takePhoto}
+                    disabled={uploading}
+                  >
+                    <Text style={styles.imageButtonText}>Take Photo</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.imageOrText}>- OR -</Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter Image URL"
+                  placeholderTextColor="#8b7355"
+                  value={formData.image_url}
+                  onChangeText={handleImageUrlInput}
+                />
+              </View>
+
+              {/* Other form inputs */}
               <TextInput
                 style={styles.input}
                 placeholder="Title *"
@@ -658,10 +1453,10 @@ export default function AdminDashboard({ navigation, route }) {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Genre *"
+                placeholder="Category *"
                 placeholderTextColor="#8b7355"
-                value={formData.genre}
-                onChangeText={(text) => handleInputChange('genre', text)}
+                value={formData.category}
+                onChangeText={(text) => handleInputChange('category', text)}
               />
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -674,7 +1469,7 @@ export default function AdminDashboard({ navigation, route }) {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Published Year *"
+                placeholder="Published Year"
                 placeholderTextColor="#8b7355"
                 value={formData.published_year}
                 onChangeText={(text) => handleInputChange('published_year', text)}
@@ -703,29 +1498,24 @@ export default function AdminDashboard({ navigation, route }) {
                 onChangeText={(text) => handleInputChange('available_copies', text)}
                 keyboardType="numeric"
               />
-              <TextInput
-                style={styles.input}
-                placeholder="Image URL (optional)"
-                placeholderTextColor="#8b7355"
-                value={formData.image_url}
-                onChangeText={(text) => handleInputChange('image_url', text)}
-              />
             </ScrollView>
 
             <View style={styles.modalActions}>
               <TouchableOpacity 
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setModalVisible(false)}
+                disabled={uploading}
               >
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.modalButton, styles.submitButton]}
+                style={[styles.modalButton, styles.submitButton, uploading && styles.disabledButton]}
                 onPress={editingBook ? handleUpdateBook : handleAddBook}
+                disabled={uploading}
               >
                 <Text style={styles.modalButtonText}>
-                  {editingBook ? "Update" : "Add"} Book
+                  {uploading ? "Uploading..." : (editingBook ? "Update" : "Add") + " Book"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -780,581 +1570,58 @@ export default function AdminDashboard({ navigation, route }) {
           </View>
         </View>
       </Modal>
+
+      {/* Status Update Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={statusModalVisible}
+        onRequestClose={() => setStatusModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Status</Text>
+            
+            {selectedRecord && (
+              <>
+                <View style={styles.statusInfoCard}>
+                  <Text style={styles.statusBookTitle}>{selectedRecord.book?.title}</Text>
+                  <Text style={styles.statusUserName}>by {selectedRecord.user_name}</Text>
+                  <View style={styles.currentStatusContainer}>
+                    <Text style={styles.currentStatusLabel}>Current Status:</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedRecord.status) }]}>
+                      <Text style={styles.statusText}>{getStatusText(selectedRecord.status)}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <Text style={styles.statusOptionsLabel}>Update to:</Text>
+                
+                <View style={styles.statusOptionsContainer}>
+                  {getAvailableStatusOptions(selectedRecord.status).map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[styles.statusOptionButton, { backgroundColor: option.color }]}
+                      onPress={() => handleUpdateStatus(selectedRecord._id, option.value)}
+                    >
+                      <Text style={styles.statusOptionText}>{option.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setStatusModalVisible(false)}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f6f3",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    zIndex: 999,
-  },
-  sidebar: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 240,
-    backgroundColor: "#2c1810",
-    paddingTop: 30,
-    paddingBottom: 20,
-    borderRightWidth: 1,
-    borderRightColor: "#1a0f08",
-    zIndex: 1000,
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  logoContainer: {
-    alignItems: "center",
-    paddingBottom: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: "#3d2418",
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  logoText: {
-    fontSize: 48,
-    marginBottom: 10,
-  },
-  libraryName: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#f5e6d3",
-    letterSpacing: 2,
-  },
-  menu: {
-    paddingHorizontal: 15,
-  },
-  menuItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 8,
-    backgroundColor: "transparent",
-  },
-  activeMenuItem: {
-    backgroundColor: "#8b4513",
-  },
-  menuText: {
-    fontSize: 15,
-    color: "#b8a896",
-    fontWeight: "500",
-  },
-  activeMenuText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f8f6f3",
-  },
-  header: {
-    padding: 30,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e8e3dc",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuButton: {
-    width: 44,
-    height: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-    borderRadius: 8,
-    backgroundColor: "#f8f6f3",
-  },
-
-    hamburger: {
-    width: 24,
-    height: 18,
-    justifyContent: "space-between",
-  },
-  hamburgerLine: {
-    height: 2,
-    backgroundColor: "#2c1810",
-    borderRadius: 1,
-  },
-  headerText: {
-    flex: 1,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 4,
-  },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: "#8b7355",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  section: {
-    padding: 20,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 25,
-    position: "relative",
-  },
-  headerAccent: {
-    position: "absolute",
-    left: -20,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    backgroundColor: "#8b4513",
-    borderTopRightRadius: 2,
-    borderBottomRightRadius: 2,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginLeft: 15,
-    flex: 1,
-  },
-  addButton: {
-    backgroundColor: "#8b4513",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    shadowColor: "#8b4513",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  addButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  refreshButton: {
-    backgroundColor: "#f8f6f3",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-  },
-  refreshButtonText: {
-    color: "#8b7355",
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  loadingContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 50,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#8b7355",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 50,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-    borderStyle: "dashed",
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: "#8b7355",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  emptyStateButton: {
-    backgroundColor: "#8b4513",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  emptyStateButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  booksGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  bookCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 16,
-    width: "100%",
-    maxWidth: "100%",
-    flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-    overflow: "hidden",
-  },
-  userCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 16,
-    width: "100%",
-    maxWidth: "100%",
-    flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-    overflow: "hidden",
-  },
-  bookSpine: {
-    width: 6,
-    backgroundColor: "#8b4513",
-  },
-  activeSpine: {
-    backgroundColor: "#22c55e",
-  },
-  bannedSpine: {
-    backgroundColor: "#dc2626",
-  },
-  bookContent: {
-    flex: 1,
-    padding: 16,
-  },
-  bookTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: "#8b7355",
-    marginBottom: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#f0ebe5",
-    marginBottom: 12,
-  },
-  bookDetails: {
-    marginBottom: 12,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: "#8b7355",
-    fontWeight: "500",
-    flex: 1,
-  },
-  detailValue: {
-    fontSize: 12,
-    color: "#2c1810",
-    fontWeight: "600",
-    flex: 1,
-    textAlign: "right",
-  },
-  genrePill: {
-    backgroundColor: "#f0ebe5",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  genreText: {
-    fontSize: 11,
-    color: "#8b7355",
-    fontWeight: "500",
-  },
-  roleBadge: {
-    backgroundColor: "#f0ebe5",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  adminRoleBadge: {
-    backgroundColor: "#fef3c7",
-  },
-  roleText: {
-    fontSize: 10,
-    color: "#8b7355",
-    fontWeight: "700",
-  },
-  statusBadge: {
-    backgroundColor: "#dcfce7",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  outOfStockBadge: {
-    backgroundColor: "#fecaca",
-  },
-  bannedBadge: {
-    backgroundColor: "#fecaca",
-  },
-  statusText: {
-    fontSize: 10,
-    color: "#166534",
-    fontWeight: "700",
-  },
-  banReasonContainer: {
-    backgroundColor: "#fef2f2",
-    padding: 8,
-    borderRadius: 6,
-    marginTop: 4,
-  },
-  banReasonText: {
-    fontSize: 11,
-    color: "#dc2626",
-    fontStyle: "italic",
-  },
-  bookActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  editButton: {
-    backgroundColor: "#f0ebe5",
-  },
-  deleteButton: {
-    backgroundColor: "#fecaca",
-  },
-  banButton: {
-    backgroundColor: "#fecaca",
-  },
-  unbanButton: {
-    backgroundColor: "#dcfce7",
-  },
-  logoutButton: {
-    backgroundColor: "#f0ebe5",
-    marginTop: 16,
-  },
-  buttonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#2c1810",
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  statCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    width: "48%",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-  },
-  statIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#f8f6f3",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  statIcon: {
-    fontSize: 20,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#8b7355",
-    textAlign: "center",
-  },
-  profileCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-  },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  avatarCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#8b4513",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 4,
-  },
-  profileRole: {
-    fontSize: 14,
-    color: "#8b7355",
-    marginBottom: 8,
-  },
-  adminBadge: {
-    backgroundColor: "#fef3c7",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-  },
-  adminBadgeText: {
-    fontSize: 10,
-    color: "#92400e",
-    fontWeight: "700",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 24,
-    width: "100%",
-    maxWidth: 500,
-    maxHeight: "80%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  formScroll: {
-    maxHeight: 400,
-  },
-  input: {
-    backgroundColor: "#f8f6f3",
-    borderWidth: 1,
-    borderColor: "#e8e3dc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 14,
-    color: "#2c1810",
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#f0ebe5",
-  },
-  submitButton: {
-    backgroundColor: "#8b4513",
-  },
-  banConfirmButton: {
-    backgroundColor: "#dc2626",
-  },
-  modalButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2c1810",
-  },
-  banUserInfoCard: {
-    backgroundColor: "#f8f6f3",
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#dc2626",
-  },
-  banUserName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 4,
-  },
-  banUserEmail: {
-    fontSize: 14,
-    color: "#8b7355",
-  },
-});

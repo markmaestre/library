@@ -2,15 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
   Animated,
   Dimensions,
   Modal,
+  Image,
+  RefreshControl,
 } from "react-native";
 import API from "../utils/api";
+import styles from "./UserDashboard.styles";
 
 export default function UserDashboard({ navigation, route }) {
   const name = route.params?.name || "User";
@@ -18,13 +20,18 @@ export default function UserDashboard({ navigation, route }) {
   const [availableBooks, setAvailableBooks] = useState([]);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [borrowingHistory, setBorrowingHistory] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const drawerAnim = useRef(new Animated.Value(-280)).current;
+  
+  // Fixed: Consistent drawer width value
+  const DRAWER_WIDTH = 280;
+  const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  
   const [receiptVisible, setReceiptVisible] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
-  const [hoveredCard, setHoveredCard] = useState(null);
   const cardScales = useRef({}).current;
 
   useEffect(() => {
@@ -55,26 +62,32 @@ export default function UserDashboard({ navigation, route }) {
     }).start();
   };
 
-  const toggleDrawer = () => {
-    const toValue = isDrawerOpen ? -240 : 0;
+  // Fixed: Improved drawer functions
+  const openDrawer = () => {
     Animated.spring(drawerAnim, {
-      toValue,
+      toValue: 0,
       useNativeDriver: true,
       tension: 65,
       friction: 10,
     }).start();
-    setIsDrawerOpen(!isDrawerOpen);
+    setIsDrawerOpen(true);
   };
 
   const closeDrawer = () => {
+    Animated.spring(drawerAnim, {
+      toValue: -DRAWER_WIDTH,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 10,
+    }).start();
+    setIsDrawerOpen(false);
+  };
+
+  const toggleDrawer = () => {
     if (isDrawerOpen) {
-      Animated.spring(drawerAnim, {
-        toValue: -240,
-        useNativeDriver: true,
-        tension: 65,
-        friction: 10,
-      }).start();
-      setIsDrawerOpen(false);
+      closeDrawer();
+    } else {
+      openDrawer();
     }
   };
 
@@ -100,6 +113,10 @@ export default function UserDashboard({ navigation, route }) {
           const historyResponse = await API.get("/books/borrowing-history");
           setBorrowingHistory(historyResponse.data);
           break;
+        case "notifications":
+          const notificationsResponse = await API.get("/books/notifications");
+          setNotifications(notificationsResponse.data);
+          break;
       }
     } catch (error) {
       console.error("Error loading data:", error);
@@ -112,6 +129,12 @@ export default function UserDashboard({ navigation, route }) {
         useNativeDriver: true,
       }).start();
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadSectionData();
+    setRefreshing(false);
   };
 
   const borrowBook = async (bookId) => {
@@ -128,10 +151,11 @@ export default function UserDashboard({ navigation, route }) {
       setReceiptData({
         transactionId: response.data.receipt.transaction_id,
         bookTitle: response.data.receipt.book_title,
-        dueDate: new Date(response.data.receipt.due_date).toLocaleDateString(),
-        borrowDate: new Date().toLocaleDateString(),
-        borrowTime: new Date().toLocaleTimeString(),
+        requestDate: new Date(response.data.receipt.request_date).toLocaleDateString(),
+        requestTime: new Date(response.data.receipt.request_date).toLocaleTimeString(),
         memberName: name,
+        status: "pending",
+        note: response.data.receipt.note
       });
       setReceiptVisible(true);
       loadSectionData();
@@ -163,6 +187,49 @@ export default function UserDashboard({ navigation, route }) {
     }
   };
 
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await API.put(`/books/notifications/${notificationId}/read`);
+      // Update local state
+      setNotifications(notifications.map(notif => 
+        notif._id === notificationId ? {...notif, is_read: true} : notif
+      ));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const deleteNotification = async (notificationId) => {
+    try {
+      await API.delete(`/books/notifications/${notificationId}`);
+      setNotifications(notifications.filter(notif => notif._id !== notificationId));
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending": return "#FFA500";
+      case "borrowed": return "#007AFF";
+      case "overdue": return "#FF3B30";
+      case "returned": return "#34C759";
+      case "rejected": return "#FF3B30";
+      default: return "#8E8E93";
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "pending": return "Pending Approval";
+      case "borrowed": return "Borrowed";
+      case "overdue": return "Overdue";
+      case "returned": return "Returned";
+      case "rejected": return "Rejected";
+      default: return status;
+    }
+  };
+
   const renderReceipt = () => (
     <Modal
       visible={receiptVisible}
@@ -173,13 +240,13 @@ export default function UserDashboard({ navigation, route }) {
       <View style={styles.receiptModalOverlay}>
         <View style={styles.receiptContainer}>
           <View style={styles.receiptHeader}>
-            <Text style={styles.receiptHeaderText}>LIBRARY TRANSACTION RECEIPT</Text>
+            <Text style={styles.receiptHeaderText}>LIBRARY BORROW REQUEST</Text>
             <View style={styles.receiptHeaderLine} />
           </View>
 
           <View style={styles.receiptBody}>
             <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>RECEIPT NO.</Text>
+              <Text style={styles.receiptLabel}>REQUEST NO.</Text>
               <Text style={styles.receiptValue}>{receiptData?.transactionId}</Text>
             </View>
 
@@ -187,12 +254,12 @@ export default function UserDashboard({ navigation, route }) {
 
             <View style={styles.receiptSection}>
               <Text style={styles.receiptLabel}>DATE</Text>
-              <Text style={styles.receiptValue}>{receiptData?.borrowDate}</Text>
+              <Text style={styles.receiptValue}>{receiptData?.requestDate}</Text>
             </View>
 
             <View style={styles.receiptSection}>
               <Text style={styles.receiptLabel}>TIME</Text>
-              <Text style={styles.receiptValue}>{receiptData?.borrowTime}</Text>
+              <Text style={styles.receiptValue}>{receiptData?.requestTime}</Text>
             </View>
 
             <View style={styles.receiptDivider} />
@@ -212,19 +279,20 @@ export default function UserDashboard({ navigation, route }) {
             <View style={styles.receiptDivider} />
 
             <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>DUE DATE</Text>
-              <Text style={styles.receiptDueDate}>{receiptData?.dueDate}</Text>
+              <Text style={styles.receiptLabel}>STATUS:</Text>
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(receiptData?.status) }]}>
+                <Text style={styles.statusText}>{getStatusText(receiptData?.status)}</Text>
+              </View>
             </View>
 
             <View style={styles.receiptDividerThick} />
 
             <View style={styles.receiptFooterSection}>
               <Text style={styles.receiptFooterText}>
-                Please present this receipt at the{'\n'}
-                circulation desk to collect your book.
+                {receiptData?.note}
               </Text>
               <Text style={styles.receiptFooterNote}>
-                Keep this receipt for your records.
+                You will receive a notification once your request is approved.
               </Text>
             </View>
 
@@ -279,14 +347,28 @@ export default function UserDashboard({ navigation, route }) {
             >
               <View style={styles.bookSpine} />
               <View style={styles.bookContent}>
+                {/* Book Image Section */}
+                {book.image_url ? (
+                  <Image 
+                    source={{ uri: book.image_url }} 
+                    style={styles.bookImage}
+                    resizeMode="cover"
+                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                  />
+                ) : (
+                  <View style={styles.bookImagePlaceholder}>
+                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                  </View>
+                )}
+                
                 <View style={styles.bookCornerDecoration} />
                 <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
                 <Text style={styles.bookAuthor}>by {book.author}</Text>
                 <View style={styles.divider} />
                 <View style={styles.bookDetails}>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Genre</Text>
-                    <Text style={styles.detailValue}>{book.genre}</Text>
+                    <Text style={styles.detailLabel}>Category</Text>
+                    <Text style={styles.detailValue}>{book.category || book.genre}</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Available</Text>
@@ -306,7 +388,7 @@ export default function UserDashboard({ navigation, route }) {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.buttonText}>
-                    {book.available_copies === 0 ? "Not Available" : "Borrow Book"}
+                    {book.available_copies === 0 ? "Not Available" : "Request to Borrow"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -324,61 +406,99 @@ export default function UserDashboard({ navigation, route }) {
         <Text style={styles.sectionTitle}>My Borrowed Books</Text>
       </View>
       <View style={styles.booksGrid}>
-        {borrowedBooks.map((record) => (
-          <Animated.View 
-            key={record._id}
-            style={[
-              styles.bookCard,
-              {
-                transform: [{ scale: getCardScale(record._id) }]
-              }
-            ]}
-          >
-            <TouchableOpacity
-              activeOpacity={1}
-              onPressIn={() => animateCard(record._id, 0.97)}
-              onPressOut={() => animateCard(record._id, 1)}
+        {borrowedBooks.map((record) => {
+          const isOverdue = record.status === "overdue" || (record.due_date && new Date(record.due_date) < new Date());
+          const status = record.status || (isOverdue ? "overdue" : "borrowed");
+          
+          return (
+            <Animated.View 
+              key={record._id}
+              style={[
+                styles.bookCard,
+                {
+                  transform: [{ scale: getCardScale(record._id) }]
+                }
+              ]}
             >
-              <View style={[styles.bookSpine, styles.borrowedSpine]} />
-              <View style={styles.bookContent}>
-                <View style={[styles.bookCornerDecoration, styles.borrowedCorner]} />
-                <Text style={styles.bookTitle} numberOfLines={2}>{record.book?.title}</Text>
-                <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
-                <View style={styles.divider} />
-                <View style={styles.bookDetails}>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Borrowed</Text>
-                    <Text style={styles.detailValue}>
-                      {new Date(record.borrow_date).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Due Date</Text>
-                    <Text style={styles.detailValue}>
-                      {new Date(record.due_date).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Status</Text>
-                    <View style={[
-                      styles.statusBadge,
-                      record.status === "overdue" && styles.overdueBadge
-                    ]}>
-                      <Text style={styles.statusText}>{record.status}</Text>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPressIn={() => animateCard(record._id, 0.97)}
+                onPressOut={() => animateCard(record._id, 1)}
+              >
+                <View style={[styles.bookSpine, { backgroundColor: getStatusColor(status) }]} />
+                <View style={styles.bookContent}>
+                  {/* Book Image Section */}
+                  {record.book?.image_url ? (
+                    <Image 
+                      source={{ uri: record.book.image_url }} 
+                      style={styles.bookImage}
+                      resizeMode="cover"
+                      onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                    />
+                  ) : (
+                    <View style={styles.bookImagePlaceholder}>
+                      <Text style={styles.bookImagePlaceholderText}>📚</Text>
                     </View>
+                  )}
+                  
+                  <View style={[styles.bookCornerDecoration, { backgroundColor: getStatusColor(status) }]} />
+                  <Text style={styles.bookTitle} numberOfLines={2}>{record.book?.title}</Text>
+                  <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
+                  <View style={styles.divider} />
+                  <View style={styles.bookDetails}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Status</Text>
+                      <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) }]}>
+                        <Text style={styles.statusText}>{getStatusText(status)}</Text>
+                      </View>
+                    </View>
+                    
+                    {record.request_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Requested: </Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(record.request_date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {record.borrow_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Borrowed</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(record.borrow_date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {record.due_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Due Date</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(record.due_date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
                   </View>
+                  
+                  {status === "borrowed" || status === "overdue" ? (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.returnButton]}
+                      onPress={() => returnBook(record._id)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.buttonText}>Return Book</Text>
+                    </TouchableOpacity>
+                  ) : status === "pending" ? (
+                    <View style={[styles.actionButton, styles.pendingButton]}>
+                      <Text style={styles.buttonText}>Waiting for Approval</Text>
+                    </View>
+                  ) : null}
                 </View>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.returnButton]}
-                  onPress={() => returnBook(record._id)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.buttonText}>Return Book</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-        ))}
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        })}
       </View>
     </Animated.View>
   );
@@ -405,25 +525,61 @@ export default function UserDashboard({ navigation, route }) {
               onPressIn={() => animateCard(record._id, 0.97)}
               onPressOut={() => animateCard(record._id, 1)}
             >
-              <View style={[styles.bookSpine, styles.historySpine]} />
+              <View style={[styles.bookSpine, { backgroundColor: getStatusColor(record.status) }]} />
               <View style={styles.bookContent}>
-                <View style={[styles.bookCornerDecoration, styles.historyCorner]} />
+                {/* Book Image Section */}
+                {record.book?.image_url ? (
+                  <Image 
+                    source={{ uri: record.book.image_url }} 
+                    style={styles.bookImage}
+                    resizeMode="cover"
+                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                  />
+                ) : (
+                  <View style={styles.bookImagePlaceholder}>
+                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                  </View>
+                )}
+                
+                <View style={[styles.bookCornerDecoration, { backgroundColor: getStatusColor(record.status) }]} />
                 <Text style={styles.bookTitle} numberOfLines={2}>{record.book?.title}</Text>
                 <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
                 <View style={styles.divider} />
                 <View style={styles.bookDetails}>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Borrowed</Text>
-                    <Text style={styles.detailValue}>
-                      {new Date(record.borrow_date).toLocaleDateString()}
-                    </Text>
+                    <Text style={styles.detailLabel}>Status</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(record.status) }]}>
+                      <Text style={styles.statusText}>{getStatusText(record.status)}</Text>
+                    </View>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Returned</Text>
-                    <Text style={styles.detailValue}>
-                      {new Date(record.return_date).toLocaleDateString()}
-                    </Text>
-                  </View>
+                  
+                  {record.request_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Requested: </Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.request_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {record.borrow_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Borrowed</Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.borrow_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {record.return_date && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Returned</Text>
+                      <Text style={styles.detailValue}>
+                        {new Date(record.return_date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                  
                   {record.fine_amount > 0 && (
                     <View style={styles.fineContainer}>
                       <Text style={styles.fineText}>Fine: ${record.fine_amount}</Text>
@@ -435,6 +591,68 @@ export default function UserDashboard({ navigation, route }) {
           </Animated.View>
         ))}
       </View>
+    </Animated.View>
+  );
+
+  const renderNotifications = () => (
+    <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.headerAccent} />
+        <Text style={styles.sectionTitle}>Notifications</Text>
+      </View>
+      
+      {notifications.length === 0 ? (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyStateCircle}>
+            <Text style={styles.emptyStateIcon}>🔔</Text>
+          </View>
+          <Text style={styles.emptyStateText}>No new notifications</Text>
+          <Text style={styles.emptyStateSubtext}>
+            We'll notify you about due dates and updates
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.notificationsList}>
+          {notifications.map((notification) => (
+            <View 
+              key={notification._id} 
+              style={[
+                styles.notificationCard,
+                !notification.is_read && styles.unreadNotification
+              ]}
+            >
+              <View style={styles.notificationHeader}>
+                <Text style={styles.notificationTitle}>{notification.title}</Text>
+                <View style={styles.notificationActions}>
+                  {!notification.is_read && (
+                    <TouchableOpacity 
+                      onPress={() => markNotificationAsRead(notification._id)}
+                      style={styles.notificationAction}
+                    >
+                      <Text style={styles.notificationActionText}>Mark Read</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity 
+                    onPress={() => deleteNotification(notification._id)}
+                    style={styles.notificationAction}
+                  >
+                    <Text style={styles.notificationActionText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text style={styles.notificationMessage}>{notification.message}</Text>
+              <Text style={styles.notificationTime}>
+                {new Date(notification.created_at).toLocaleString()}
+              </Text>
+              {notification.type === "overdue" && (
+                <View style={styles.overdueIndicator}>
+                  <Text style={styles.overdueIndicatorText}>OVERDUE</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
     </Animated.View>
   );
 
@@ -460,23 +678,7 @@ export default function UserDashboard({ navigation, route }) {
       case "history":
         return renderBorrowingHistory();
       case "notifications":
-        return (
-          <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.headerAccent} />
-              <Text style={styles.sectionTitle}>Notifications</Text>
-            </View>
-            <View style={styles.emptyState}>
-              <View style={styles.emptyStateCircle}>
-                <Text style={styles.emptyStateIcon}>🔔</Text>
-              </View>
-              <Text style={styles.emptyStateText}>No new notifications</Text>
-              <Text style={styles.emptyStateSubtext}>
-                We'll notify you about due dates and updates
-              </Text>
-            </View>
-          </Animated.View>
-        );
+        return renderNotifications();
       case "profile":
         return (
           <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
@@ -533,7 +735,7 @@ export default function UserDashboard({ navigation, route }) {
       >
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>📚</Text>
-          <Text style={styles.libraryName}>Library</Text>
+          <Text style={styles.libraryName}>IT Thesis Library</Text>
           <View style={styles.logoUnderline} />
         </View>
         
@@ -586,6 +788,11 @@ export default function UserDashboard({ navigation, route }) {
               {activeSection === "notifications" && <View style={styles.menuIndicator} />}
               <Text style={[styles.menuText, activeSection === "notifications" && styles.activeMenuText]}>
                 Notifications
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <Text style={styles.notificationBadge}>
+                    {" "}({notifications.filter(n => !n.is_read).length})
+                  </Text>
+                )}
               </Text>
             </View>
           </TouchableOpacity>
@@ -623,7 +830,17 @@ export default function UserDashboard({ navigation, route }) {
             <Text style={styles.welcomeSubtitle}>Explore your literary journey</Text>
           </View>
         </View>
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#007AFF']}
+            />
+          }
+        >
           {renderContent()}
         </ScrollView>
       </View>
@@ -632,587 +849,3 @@ export default function UserDashboard({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f6f3",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    zIndex: 999,
-  },
-  sidebar: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 240,
-    backgroundColor: "#2c1810",
-    paddingTop: 30,
-    paddingBottom: 20,
-    borderRightWidth: 1,
-    borderRightColor: "#1a0f08",
-    zIndex: 1000,
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  logoContainer: {
-    alignItems: "center",
-    paddingBottom: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: "#3d2418",
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  logoText: {
-    fontSize: 48,
-    marginBottom: 10,
-  },
-  libraryName: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#f5e6d3",
-    letterSpacing: 2,
-  },
-  logoUnderline: {
-    width: 60,
-    height: 2,
-    backgroundColor: "#8b4513",
-    marginTop: 10,
-  },
-  menu: {
-    paddingHorizontal: 15,
-  },
-  menuItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 8,
-    backgroundColor: "transparent",
-  },
-  activeMenuItem: {
-    backgroundColor: "#8b4513",
-  },
-  menuItemContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuIndicator: {
-    width: 4,
-    height: 20,
-    backgroundColor: "#f5e6d3",
-    marginRight: 10,
-    borderRadius: 2,
-  },
-  menuText: {
-    fontSize: 15,
-    color: "#b8a896",
-    fontWeight: "500",
-  },
-  activeMenuText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f8f6f3",
-  },
-  header: {
-    padding: 30,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e8e3dc",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuButton: {
-    width: 44,
-    height: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-    borderRadius: 8,
-    backgroundColor: "#f8f6f3",
-  },
-  hamburger: {
-    width: 24,
-    height: 18,
-    justifyContent: "space-between",
-  },
-  hamburgerLine: {
-    width: 24,
-    height: 3,
-    backgroundColor: "#2c1810",
-    borderRadius: 2,
-  },
-  headerText: {
-    flex: 1,
-  },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 5,
-  },
-  welcomeSubtitle: {
-    fontSize: 15,
-    color: "#8b7355",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  section: {
-    padding: 25,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 25,
-  },
-  headerAccent: {
-    width: 4,
-    height: 28,
-    backgroundColor: "#8b4513",
-    marginRight: 15,
-    borderRadius: 2,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2c1810",
-  },
-  booksGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 20,
-  },
-  bookCard: {
-    width: "48%",
-    minWidth: 280,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    flexDirection: "row",
-  },
-  bookSpine: {
-    width: 8,
-    backgroundColor: "#8b4513",
-  },
-  borrowedSpine: {
-    backgroundColor: "#d4a574",
-  },
-  historySpine: {
-    backgroundColor: "#6d4c3d",
-  },
-  bookContent: {
-    flex: 1,
-    padding: 20,
-    position: "relative",
-  },
-  bookCornerDecoration: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: 40,
-    height: 40,
-    borderTopRightRadius: 12,
-    borderBottomLeftRadius: 40,
-    backgroundColor: "#8b4513",
-    opacity: 0.1,
-  },
-  borrowedCorner: {
-    backgroundColor: "#d4a574",
-  },
-  historyCorner: {
-    backgroundColor: "#6d4c3d",
-  },
-  bookTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 6,
-    lineHeight: 24,
-  },
-  bookAuthor: {
-    fontSize: 14,
-    color: "#8b7355",
-    marginBottom: 15,
-    fontStyle: "italic",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e8e3dc",
-    marginBottom: 15,
-  },
-  bookDetails: {
-    marginBottom: 15,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  detailLabel: {
-    fontSize: 13,
-    color: "#8b7355",
-    fontWeight: "500",
-  },
-  detailValue: {
-    fontSize: 13,
-    color: "#2c1810",
-    fontWeight: "600",
-  },
-  availabilityBadge: {
-    backgroundColor: "#e8f5e9",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#4caf50",
-  },
-  availabilityText: {
-    color: "#2e7d32",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  statusBadge: {
-    backgroundColor: "#e3f2fd",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2196f3",
-  },
-  overdueBadge: {
-    backgroundColor: "#ffebee",
-    borderColor: "#f44336",
-  },
-  statusText: {
-    color: "#1976d2",
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  fineContainer: {
-    backgroundColor: "#ffebee",
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 5,
-    borderLeftWidth: 3,
-    borderLeftColor: "#f44336",
-  },
-  fineText: {
-    fontSize: 13,
-    color: "#c62828",
-    fontWeight: "700",
-  },
-  actionButton: {
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  borrowButton: {
-    backgroundColor: "#8b4513",
-  },
-  returnButton: {
-    backgroundColor: "#d4a574",
-  },
-  logoutButton: {
-    backgroundColor: "#c62828",
-    marginTop: 20,
-  },
-  disabledButton: {
-    backgroundColor: "#9e9e9e",
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-    letterSpacing: 0.5,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 100,
-  },
-  loadingSpinner: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  loadingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#8b4513",
-    marginHorizontal: 5,
-  },
-  loadingDot2: {
-    backgroundColor: "#d4a574",
-  },
-  loadingDot3: {
-    backgroundColor: "#6d4c3d",
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#8b7355",
-    fontStyle: "italic",
-  },
-  emptyState: {
-    backgroundColor: "#fff",
-    padding: 40,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  emptyStateCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#f8f6f3",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  emptyStateIcon: {
-    fontSize: 40,
-  },
-  emptyStateText: {
-    fontSize: 18,
-    color: "#2c1810",
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: "#8b7355",
-    textAlign: "center",
-  },
-  profileCard: {
-    backgroundColor: "#fff",
-    padding: 30,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  avatarCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#8b4513",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 20,
-    position: "relative",
-  },
-  avatarText: {
-    fontSize: 36,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  avatarRing: {
-    position: "absolute",
-    top: -4,
-    left: -4,
-    right: -4,
-    bottom: -4,
-    borderRadius: 44,
-    borderWidth: 2,
-    borderColor: "#d4a574",
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2c1810",
-    marginBottom: 5,
-  },
-  profileRole: {
-    fontSize: 15,
-    color: "#8b7355",
-    marginBottom: 10,
-  },
-  profileBadge: {
-    backgroundColor: "#e8f5e9",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#4caf50",
-    alignSelf: "flex-start",
-  },
-  profileBadgeText: {
-    color: "#2e7d32",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  receiptModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  receiptContainer: {
-    width: "100%",
-    maxWidth: 400,
-    backgroundColor: "#fff",
-    borderRadius: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  receiptHeader: {
-    backgroundColor: "#2c1810",
-    padding: 20,
-    alignItems: "center",
-  },
-  receiptHeaderText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#fff",
-    letterSpacing: 2,
-    textAlign: "center",
-  },
-  receiptHeaderLine: {
-    width: "100%",
-    height: 2,
-    backgroundColor: "#8b4513",
-    marginTop: 10,
-  },
-  receiptBody: {
-    padding: 30,
-    backgroundColor: "#fff",
-  },
-  receiptSection: {
-    marginBottom: 15,
-  },
-  receiptLabel: {
-    fontSize: 11,
-    color: "#666",
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  receiptValue: {
-    fontSize: 15,
-    color: "#000",
-    fontWeight: "600",
-    fontFamily: "monospace",
-  },
-  receiptBookTitle: {
-    fontSize: 16,
-    color: "#000",
-    fontWeight: "700",
-    lineHeight: 22,
-  },
-  receiptDueDate: {
-    fontSize: 18,
-    color: "#c62828",
-    fontWeight: "700",
-    fontFamily: "monospace",
-  },
-  receiptDivider: {
-    height: 1,
-    backgroundColor: "#e0e0e0",
-    marginVertical: 15,
-  },
-  receiptDividerThick: {
-    height: 2,
-    backgroundColor: "#000",
-    marginVertical: 20,
-  },
-  receiptFooterSection: {
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    borderStyle: "dashed",
-    paddingTop: 20,
-    marginTop: 10,
-    alignItems: "center",
-  },
-  receiptFooterText: {
-    fontSize: 12,
-    color: "#333",
-    textAlign: "center",
-    lineHeight: 18,
-    marginBottom: 10,
-  },
-  receiptFooterNote: {
-    fontSize: 10,
-    color: "#999",
-    textAlign: "center",
-    fontStyle: "italic",
-  },
-  receiptBarcode: {
-    alignItems: "center",
-    marginTop: 20,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-  },
-  barcodeLines: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    height: 50,
-    marginBottom: 8,
-  },
-  barcodeLine: {
-    height: "100%",
-    backgroundColor: "#000",
-    marginHorizontal: 1,
-  },
-  barcodeText: {
-    fontSize: 10,
-    fontFamily: "monospace",
-    color: "#666",
-    letterSpacing: 2,
-  },
-  receiptCloseButton: {
-    backgroundColor: "#2c1810",
-    padding: 16,
-    alignItems: "center",
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
-  },
-  receiptCloseButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 2,
-  },
-});

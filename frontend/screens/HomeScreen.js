@@ -1,24 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState("home");
-
-  const featuredBooks = [
-    { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", color: "#8B4513" },
-    { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", color: "#654321" },
-    { id: 3, title: "1984", author: "George Orwell", color: "#A0522D" },
-    { id: 4, title: "Pride and Prejudice", author: "Jane Austen", color: "#6B4423" },
-  ];
-
-  const categories = [
-    { name: "Fiction", count: "2,450", icon: "📖" },
-    { name: "Non-Fiction", count: "1,890", icon: "📚" },
-    { name: "Science", count: "980", icon: "🔬" },
-    { name: "History", count: "1,230", icon: "📜" },
-    { name: "Biography", count: "670", icon: "👤" },
-    { name: "Children", count: "1,450", icon: "🧸" },
-  ];
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -26,11 +10,11 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <View style={styles.logoBooks}>
-            <View style={[styles.logoBook, { backgroundColor: "#8B4513" }]} />
-            <View style={[styles.logoBook, { backgroundColor: "#654321" }]} />
-            <View style={[styles.logoBook, { backgroundColor: "#A0522D" }]} />
+            <View style={[styles.logoBook, { backgroundColor: "#2563EB" }]} />
+            <View style={[styles.logoBook, { backgroundColor: "#7C3AED" }]} />
+            <View style={[styles.logoBook, { backgroundColor: "#059669" }]} />
           </View>
-          <Text style={styles.logoText}>City Library</Text>
+          <Text style={styles.logoText}>IT Library</Text>
         </View>
 
         <View style={styles.navLinks}>
@@ -74,15 +58,15 @@ export default function HomeScreen({ navigation }) {
                       styles.heroBook,
                       {
                         height,
-                        backgroundColor: index % 2 === 0 ? "#8B4513" : "#654321",
+                        backgroundColor: index % 2 === 0 ? "#2563EB" : "#7C3AED",
                       },
                     ]}
                   />
                 ))}
               </View>
-              <Text style={styles.heroTitle}>Discover Your Next Great Read</Text>
+              <Text style={styles.heroTitle}>IT Library Management System</Text>
               <Text style={styles.heroSubtitle}>
-                Explore our collection of over 10,000 books spanning every genre imaginable
+                Digital platform for efficient management of IT thesis papers, research projects, and academic resources
               </Text>
               <View style={styles.heroButtons}>
                 <TouchableOpacity
@@ -90,40 +74,91 @@ export default function HomeScreen({ navigation }) {
                   onPress={() => navigation.navigate("Login")}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.heroBtnPrimaryText}>Browse Catalog</Text>
+                  <Text style={styles.heroBtnPrimaryText}>Browse Thesis</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.heroBtnSecondary}
                   onPress={() => navigation.navigate("Register")}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.heroBtnSecondaryText}>Get Library Card</Text>
+                  <Text style={styles.heroBtnSecondaryText}>Get Started</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
 
-      
+          {/* Quick Access Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Quick Access</Text>
+              <TouchableOpacity>
+                <Text style={styles.sectionLink}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.quickAccessGrid}>
+              <TouchableOpacity style={styles.quickAccessCard}>
+                <Text style={styles.quickAccessTitle}>Thesis Search</Text>
+                <Text style={styles.quickAccessDesc}>Find specific IT thesis papers</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickAccessCard}>
+                <Text style={styles.quickAccessTitle}>My Account</Text>
+                <Text style={styles.quickAccessDesc}>View borrowed items</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickAccessCard}>
+                <Text style={styles.quickAccessTitle}>Categories</Text>
+                <Text style={styles.quickAccessDesc}>Browse by topic</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickAccessCard}>
+                <Text style={styles.quickAccessTitle}>New Arrivals</Text>
+                <Text style={styles.quickAccessDesc}>Latest thesis papers</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
          
-       
+          {/* Services Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Library Services</Text>
+            <View style={styles.servicesContainer}>
+              <View style={styles.serviceCard}>
+                <Text style={styles.serviceTitle}>Digital Access</Text>
+                <Text style={styles.serviceDesc}>
+                  Access thesis papers and research materials online from anywhere
+                </Text>
+              </View>
+              <View style={styles.serviceCard}>
+                <Text style={styles.serviceTitle}>Online Reservation</Text>
+                <Text style={styles.serviceDesc}>
+                  Reserve thesis papers in advance for your research needs
+                </Text>
+              </View>
+              <View style={styles.serviceCard}>
+                <Text style={styles.serviceTitle}>Research Support</Text>
+                <Text style={styles.serviceDesc}>
+                  Get assistance with your academic research and references
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* CTA Section */}
           <View style={styles.ctaSection}>
-            <Text style={styles.ctaTitle}>Ready to Start Reading?</Text>
+            <Text style={styles.ctaTitle}>Start Your Research Journey</Text>
             <Text style={styles.ctaText}>
-              Join our community of readers and get instant access to thousands of books
+              Join our digital library platform and access thousands of IT thesis papers and research materials
             </Text>
             <TouchableOpacity
               style={styles.ctaButton}
               onPress={() => navigation.navigate("Register")}
               activeOpacity={0.8}
             >
-              <Text style={styles.ctaButtonText}>Sign Up for Free</Text>
+              <Text style={styles.ctaButtonText}>Create Account</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.ctaLink}
               onPress={() => navigation.navigate("Login")}
             >
-              <Text style={styles.ctaLinkText}>Already a member? Login here</Text>
+              <Text style={styles.ctaLinkText}>Existing member? Login here</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -131,45 +166,43 @@ export default function HomeScreen({ navigation }) {
 
       {activeTab === "about" && (
         <View style={styles.section}>
-          <Text style={styles.pageTitle}>About Our Library</Text>
+          <Text style={styles.pageTitle}>About IT Library System</Text>
           
           <View style={styles.contentBlock}>
             <Text style={styles.contentTitle}>Our Mission</Text>
             <Text style={styles.contentText}>
-              We strive to be a cornerstone of our community, providing free and equal access to information, literature, and educational resources for all. Our mission is to inspire lifelong learning, foster creativity, and promote literacy across all ages.
+              We strive to provide a modern digital platform that revolutionizes how IT thesis papers and research materials are managed, accessed, and utilized. Our mission is to support academic excellence through efficient technology solutions.
             </Text>
           </View>
 
           <View style={styles.contentBlock}>
-            <Text style={styles.contentTitle}>History & Legacy</Text>
+            <Text style={styles.contentTitle}>System Overview</Text>
             <Text style={styles.contentText}>
-              Established in 1892, our library has served the community for over 130 years. From a small reading room with 200 books to a modern facility housing over 10,000 volumes, we've grown alongside our community while maintaining our commitment to public service.
+              The IT Library System addresses the challenges of manual library management by providing a comprehensive digital solution. Our platform enables seamless management of thesis papers, research projects, and academic resources while ensuring data accuracy and easy accessibility.
             </Text>
           </View>
 
-         
-
           <View style={styles.contentBlock}>
-            <Text style={styles.contentTitle}>What We Offer</Text>
+            <Text style={styles.contentTitle}>Key Features</Text>
             <View style={styles.offerItem}>
               <Text style={styles.offerBullet}>•</Text>
-              <Text style={styles.offerText}>Extensive collection of print and digital books</Text>
+              <Text style={styles.offerText}>Digital thesis catalog and search system</Text>
             </View>
             <View style={styles.offerItem}>
               <Text style={styles.offerBullet}>•</Text>
-              <Text style={styles.offerText}>Free computer and internet access</Text>
+              <Text style={styles.offerText}>Online borrowing and reservation system</Text>
             </View>
             <View style={styles.offerItem}>
               <Text style={styles.offerBullet}>•</Text>
-              <Text style={styles.offerText}>Reading programs for children and adults</Text>
+              <Text style={styles.offerText}>Automated tracking of borrowed materials</Text>
             </View>
             <View style={styles.offerItem}>
               <Text style={styles.offerBullet}>•</Text>
-              <Text style={styles.offerText}>Study rooms and quiet reading spaces</Text>
+              <Text style={styles.offerText}>Real-time availability status</Text>
             </View>
             <View style={styles.offerItem}>
               <Text style={styles.offerBullet}>•</Text>
-              <Text style={styles.offerText}>Community events and author talks</Text>
+              <Text style={styles.offerText}>Digital access to research materials</Text>
             </View>
           </View>
         </View>
@@ -177,71 +210,45 @@ export default function HomeScreen({ navigation }) {
 
       {activeTab === "contact" && (
         <View style={styles.section}>
-          <Text style={styles.pageTitle}>Contact Us</Text>
+          <Text style={styles.pageTitle}>Contact IT Library</Text>
           
           <View style={styles.contentBlock}>
-            <Text style={styles.contentTitle}>Visit Us</Text>
-            <Text style={styles.contentText}>City Library Main Branch</Text>
-            <Text style={styles.contentText}>123 Knowledge Avenue</Text>
-            <Text style={styles.contentText}>Reading District, RC 12345</Text>
+            <Text style={styles.contentTitle}>Location</Text>
+            <Text style={styles.contentText}>IT Department Library</Text>
+            <Text style={styles.contentText}>IT  Building</Text>
+            <Text style={styles.contentText}>TUP-Taguig Campus</Text>
           </View>
 
           <View style={styles.contentBlock}>
-            <Text style={styles.contentTitle}>Get In Touch</Text>
+            <Text style={styles.contentTitle}>Contact Information</Text>
             <View style={styles.contactRow}>
-              <Text style={styles.contactIcon}>📧</Text>
-              <Text style={styles.contactText}>info@citylibrary.com</Text>
+              <Text style={styles.contactText}>Email: Tup-IT-Library@gmail.com</Text>
             </View>
             <View style={styles.contactRow}>
-              <Text style={styles.contactIcon}>📞</Text>
-              <Text style={styles.contactText}>(555) 123-4567</Text>
+              <Text style={styles.contactText}>Phone: (555) 123-4567</Text>
             </View>
             <View style={styles.contactRow}>
-              <Text style={styles.contactIcon}>📠</Text>
-              <Text style={styles.contactText}>(555) 123-4568</Text>
+              <Text style={styles.contactText}>Support: itsupport@gmail.com</Text>
             </View>
           </View>
 
           <View style={styles.contentBlock}>
-            <Text style={styles.contentTitle}>Library Hours</Text>
+            <Text style={styles.contentTitle}>Operating Hours</Text>
             <View style={styles.hoursTable}>
               <View style={styles.hoursRow}>
-                <Text style={styles.hoursDay}>Monday - Thursday</Text>
-                <Text style={styles.hoursTime}>9:00 AM - 9:00 PM</Text>
+                <Text style={styles.hoursDay}>Monday - Friday</Text>
+                <Text style={styles.hoursTime}>8:00 AM - 5:00 PM</Text>
               </View>
               <View style={styles.hoursRow}>
-                <Text style={styles.hoursDay}>Friday - Saturday</Text>
-                <Text style={styles.hoursTime}>9:00 AM - 6:00 PM</Text>
+                <Text style={styles.hoursDay}>Saturday</Text>
+                <Text style={styles.hoursTime}>9:00 AM - 1:00 PM</Text>
               </View>
-              <View style={styles.hoursRow}>
-                <Text style={styles.hoursDay}>Sunday</Text>
-                <Text style={styles.hoursTime}>1:00 PM - 5:00 PM</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.contentBlock}>
-            <Text style={styles.contentTitle}>Departments</Text>
-            <View style={styles.departmentCard}>
-              <Text style={styles.departmentName}>Reference Desk</Text>
-              <Text style={styles.departmentExt}>Ext. 101</Text>
-            </View>
-            <View style={styles.departmentCard}>
-              <Text style={styles.departmentName}>Children's Section</Text>
-              <Text style={styles.departmentExt}>Ext. 102</Text>
-            </View>
-            <View style={styles.departmentCard}>
-              <Text style={styles.departmentName}>Circulation</Text>
-              <Text style={styles.departmentExt}>Ext. 103</Text>
-            </View>
-            <View style={styles.departmentCard}>
-              <Text style={styles.departmentName}>Technical Services</Text>
-              <Text style={styles.departmentExt}>Ext. 104</Text>
+             
             </View>
           </View>
 
           <TouchableOpacity style={styles.messageButton} activeOpacity={0.8}>
-            <Text style={styles.messageButtonText}>Send Us a Message</Text>
+            <Text style={styles.messageButtonText}>Contact Support</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -252,30 +259,30 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.footerSection}>
             <Text style={styles.footerTitle}>Quick Links</Text>
             <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Catalog</Text>
+              <Text style={styles.footerLinkText}>Thesis Catalog</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Events</Text>
+              <Text style={styles.footerLinkText}>Research Guides</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>FAQs</Text>
+              <Text style={styles.footerLinkText}>Help Center</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.footerSection}>
             <Text style={styles.footerTitle}>Services</Text>
             <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Borrow Books</Text>
+              <Text style={styles.footerLinkText}>Borrow Thesis</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Digital Library</Text>
+              <Text style={styles.footerLinkText}>Digital Resources</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Membership</Text>
+              <Text style={styles.footerLinkText}>Research Support</Text>
             </TouchableOpacity>
           </View>
         </View>
         <View style={styles.footerBottom}>
-          <Text style={styles.footerCopyright}>© 2025 City Library. All rights reserved.</Text>
+          <Text style={styles.footerCopyright}>© 2025 IT Library System. All rights reserved.</Text>
         </View>
       </View>
     </ScrollView>
@@ -374,7 +381,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   heroBtnPrimary: {
-    backgroundColor: "#8B6F47",
+    backgroundColor: "#2563EB",
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: "center",
@@ -434,10 +441,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  quickAccessIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
   quickAccessTitle: {
     fontSize: 16,
     fontWeight: "700",
@@ -449,71 +452,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#9D8B7A",
     textAlign: "center",
-  },
-  bookScroll: {
-    marginLeft: -20,
-    paddingLeft: 20,
-  },
-  bookCard: {
-    width: 140,
-    marginRight: 15,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  bookCover: {
-    width: "100%",
-    height: 180,
-    borderRadius: 8,
-    marginBottom: 10,
-    position: "relative",
-    borderWidth: 1,
-    borderColor: "#5C4033",
-  },
-  bookSpine: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 8,
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
-  bookPage: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    backgroundColor: "rgba(255,255,255,0.3)",
-  },
-  bookTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#2C1810",
-    marginBottom: 4,
-    height: 36,
-  },
-  bookAuthor: {
-    fontSize: 12,
-    color: "#6B5A4A",
-    marginBottom: 8,
-  },
-  bookStatus: {
-    backgroundColor: "#E8F5E9",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    alignSelf: "flex-start",
-  },
-  bookStatusText: {
-    fontSize: 11,
-    color: "#2E7D32",
-    fontWeight: "600",
   },
   categoryGrid: {
     flexDirection: "row",
@@ -531,10 +469,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
-  },
-  categoryIcon: {
-    fontSize: 28,
-    marginBottom: 8,
   },
   categoryName: {
     fontSize: 14,
@@ -560,10 +494,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  serviceIcon: {
-    fontSize: 36,
-    marginBottom: 10,
-  },
   serviceTitle: {
     fontSize: 18,
     fontWeight: "700",
@@ -576,7 +506,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   ctaSection: {
-    backgroundColor: "#6B5A4A",
+    backgroundColor: "#2563EB",
     padding: 30,
     marginHorizontal: 20,
     marginBottom: 20,
@@ -605,7 +535,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   ctaButtonText: {
-    color: "#6B5A4A",
+    color: "#2563EB",
     fontSize: 17,
     fontWeight: "700",
   },
@@ -646,34 +576,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 8,
   },
-  statsGrid: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 15,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#6B5A4A",
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 13,
-    color: "#9D8B7A",
-    fontWeight: "600",
-  },
   offerItem: {
     flexDirection: "row",
     marginBottom: 10,
@@ -691,13 +593,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   contactRow: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 12,
-  },
-  contactIcon: {
-    fontSize: 20,
-    marginRight: 12,
   },
   contactText: {
     fontSize: 15,
@@ -722,25 +618,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#6B5A4A",
   },
-  departmentCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#F5F1E8",
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  departmentName: {
-    fontSize: 15,
-    color: "#2C1810",
-    fontWeight: "600",
-  },
-  departmentExt: {
-    fontSize: 15,
-    color: "#6B5A4A",
-  },
   messageButton: {
-    backgroundColor: "#6B5A4A",
+    backgroundColor: "#2563EB",
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: "center",
