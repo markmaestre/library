@@ -10,9 +10,12 @@ import {
   Modal,
   Image,
   RefreshControl,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import API from "../utils/api";
 import styles from "./UserDashboard.styles";
+import * as ImagePicker from 'expo-image-picker';
 
 export default function UserDashboard({ navigation, route }) {
   const name = route.params?.name || "User";
@@ -26,16 +29,37 @@ export default function UserDashboard({ navigation, route }) {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
-  // Fixed: Consistent drawer width value
+  // Edit Profile States
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: "",
+    email: "",
+    dob: "",
+    gender: "",
+    address: "",
+    phone: "",
+    profile_image: "",
+    role: "",
+    created_at: ""
+  });
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  
   const DRAWER_WIDTH = 280;
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   
   const [receiptVisible, setReceiptVisible] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [bookDetailsVisible, setBookDetailsVisible] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isAvailableBook, setIsAvailableBook] = useState(false);
   const cardScales = useRef({}).current;
 
   useEffect(() => {
     loadSectionData();
+    if (activeSection === "profile") {
+      loadProfileData();
+    }
   }, [activeSection]);
 
   useEffect(() => {
@@ -45,6 +69,17 @@ export default function UserDashboard({ navigation, route }) {
       useNativeDriver: true,
     }).start();
   }, [activeSection]);
+
+  // Load profile data
+  const loadProfileData = async () => {
+    try {
+      const response = await API.get("/auth/me");
+      setProfileData(response.data);
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      Alert.alert("Error", "Failed to load profile data");
+    }
+  };
 
   const getCardScale = (id) => {
     if (!cardScales[id]) {
@@ -62,7 +97,6 @@ export default function UserDashboard({ navigation, route }) {
     }).start();
   };
 
-  // Fixed: Improved drawer functions
   const openDrawer = () => {
     Animated.spring(drawerAnim, {
       toValue: 0,
@@ -134,7 +168,16 @@ export default function UserDashboard({ navigation, route }) {
   const onRefresh = async () => {
     setRefreshing(true);
     await loadSectionData();
+    if (activeSection === "profile") {
+      await loadProfileData();
+    }
     setRefreshing(false);
+  };
+
+  const showBookDetails = (book, isAvailable = false) => {
+    setSelectedBook(book);
+    setIsAvailableBook(isAvailable);
+    setBookDetailsVisible(true);
   };
 
   const borrowBook = async (bookId) => {
@@ -190,7 +233,6 @@ export default function UserDashboard({ navigation, route }) {
   const markNotificationAsRead = async (notificationId) => {
     try {
       await API.put(`/books/notifications/${notificationId}/read`);
-      // Update local state
       setNotifications(notifications.map(notif => 
         notif._id === notificationId ? {...notif, is_read: true} : notif
       ));
@@ -230,94 +272,536 @@ export default function UserDashboard({ navigation, route }) {
     }
   };
 
+  // Edit Profile Functions
+  const openEditProfile = () => {
+    setEditProfileVisible(true);
+  };
+
+  const handleImagePick = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Sorry, we need camera roll permissions to make this work!");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
+
+  const updateProfile = async () => {
+    try {
+      setUpdatingProfile(true);
+
+      const formData = new FormData();
+      
+      // Append form fields
+      if (profileData.name) formData.append('name', profileData.name);
+      if (profileData.dob) formData.append('dob', profileData.dob);
+      if (profileData.gender) formData.append('gender', profileData.gender);
+      if (profileData.address) formData.append('address', profileData.address);
+      if (profileData.phone) formData.append('phone', profileData.phone);
+
+      // Append image if selected
+      if (selectedImage) {
+        const localUri = selectedImage.uri;
+        const filename = localUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+
+        formData.append('profile_image', {
+          uri: localUri,
+          name: filename,
+          type,
+        });
+      }
+
+      const response = await API.put("/auth/profile", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      Alert.alert("Success", "Profile updated successfully");
+      setEditProfileVisible(false);
+      setSelectedImage(null);
+      await loadProfileData(); // Refresh profile data
+      
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", error.response?.data?.detail || "Failed to update profile");
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
+  const renderEditProfileModal = () => (
+    <Modal
+      visible={editProfileVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setEditProfileVisible(false)}
+    >
+      <View style={styles.editProfileModalOverlay}>
+        <View style={styles.editProfileContainer}>
+          <View style={styles.editProfileHeader}>
+            <Text style={styles.editProfileHeaderText}>EDIT PROFILE</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setEditProfileVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.editProfileScrollView} showsVerticalScrollIndicator={false}>
+            <View style={styles.editProfileBody}>
+              {/* Profile Image Section */}
+              <View style={styles.profileImageSection}>
+                <TouchableOpacity onPress={handleImagePick} style={styles.profileImageContainer}>
+                  {(selectedImage?.uri || profileData.profile_image) ? (
+                    <Image 
+                      source={{ uri: selectedImage?.uri || profileData.profile_image }} 
+                      style={styles.profileImageLarge}
+                    />
+                  ) : (
+                    <View style={styles.profileImagePlaceholderLarge}>
+                      <Text style={styles.profileImagePlaceholderTextLarge}>
+                        {profileData.name?.charAt(0).toUpperCase() || 'U'}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.cameraIconOverlay}>
+                    <Text style={styles.cameraIcon}>📷</Text>
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.profileImageHint}>Tap to change photo</Text>
+              </View>
+
+              {/* Form Fields */}
+              <View style={styles.formSection}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Full Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={profileData.name}
+                    onChangeText={(text) => setProfileData({...profileData, name: text})}
+                    placeholder="Enter your full name"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.disabledInput]}
+                    value={profileData.email}
+                    editable={false}
+                    placeholder="Email (cannot be changed)"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Date of Birth</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={profileData.dob}
+                    onChangeText={(text) => setProfileData({...profileData, dob: text})}
+                    placeholder="YYYY-MM-DD"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Gender</Text>
+                  <View style={styles.genderOptions}>
+                    {['Male', 'Female', 'Other'].map((gender) => (
+                      <TouchableOpacity
+                        key={gender}
+                        style={[
+                          styles.genderOption,
+                          profileData.gender === gender && styles.genderOptionSelected
+                        ]}
+                        onPress={() => setProfileData({...profileData, gender})}
+                      >
+                        <Text style={[
+                          styles.genderOptionText,
+                          profileData.gender === gender && styles.genderOptionTextSelected
+                        ]}>
+                          {gender}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Phone Number</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={profileData.phone}
+                    onChangeText={(text) => setProfileData({...profileData, phone: text})}
+                    placeholder="Enter your phone number"
+                    keyboardType="phone-pad"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Address</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    value={profileData.address}
+                    onChangeText={(text) => setProfileData({...profileData, address: text})}
+                    placeholder="Enter your address"
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.editProfileActions}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.saveButton]}
+              onPress={updateProfile}
+              disabled={updatingProfile}
+              activeOpacity={0.8}
+            >
+              {updatingProfile ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={() => setEditProfileVisible(false)}
+              disabled={updatingProfile}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderBookDetailsModal = () => (
+    <Modal
+      visible={bookDetailsVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setBookDetailsVisible(false)}
+    >
+      <View style={styles.bookDetailsModalOverlay}>
+        <View style={styles.bookDetailsContainer}>
+          <View style={styles.bookDetailsHeader}>
+            <Text style={styles.bookDetailsHeaderText}>BOOK DETAILS</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setBookDetailsVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.bookDetailsScrollView} showsVerticalScrollIndicator={false}>
+            <View style={styles.bookDetailsBody}>
+              <View style={styles.bookImageContainer}>
+                {selectedBook?.image_url ? (
+                  <Image 
+                    source={{ uri: selectedBook.image_url }} 
+                    style={styles.bookDetailsImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.bookDetailsImagePlaceholder}>
+                    <Text style={styles.bookDetailsImagePlaceholderText}>📚</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.bookInfoSection}>
+                <Text style={styles.bookDetailsTitle}>{selectedBook?.title}</Text>
+                <Text style={styles.bookDetailsAuthor}>by {selectedBook?.author}</Text>
+                
+                {!isAvailableBook && (
+                  <View style={styles.statusContainer}>
+                    <Text style={styles.statusLabel}>Status:</Text>
+                    <View style={[styles.statusBadgeLarge, { backgroundColor: getStatusColor(selectedBook?.status) }]}>
+                      <Text style={styles.statusTextLarge}>{getStatusText(selectedBook?.status)}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.sectionDivider} />
+
+              {/* Borrow ID Section - Only for borrowed books */}
+              {!isAvailableBook && selectedBook?._id && (
+                <View style={styles.borrowIdSection}>
+                  <Text style={styles.sectionTitle}>Borrow Information</Text>
+                  <View style={styles.borrowIdContainer}>
+                    <Text style={styles.borrowIdLabel}>BORROW ID:</Text>
+                    <Text style={styles.borrowIdValue}>{selectedBook._id}</Text>
+                    <Text style={styles.borrowIdNote}>
+                      Present this ID to the librarian when borrowing the book
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.sectionDivider} />
+
+              <View style={styles.detailsSection}>
+                <Text style={styles.sectionTitle}>Book Information</Text>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>ISBN:</Text>
+                  <Text style={styles.detailValue}>{selectedBook?.isbn || "N/A"}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Category:</Text>
+                  <Text style={styles.detailValue}>{selectedBook?.category || selectedBook?.genre || "General"}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Publisher:</Text>
+                  <Text style={styles.detailValue}>{selectedBook?.publisher || "N/A"}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Published Year:</Text>
+                  <Text style={styles.detailValue}>{selectedBook?.published_year || "N/A"}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Total Copies:</Text>
+                  <Text style={styles.detailValue}>{selectedBook?.total_copies || 1}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Available Copies:</Text>
+                  <Text style={styles.detailValue}>{selectedBook?.available_copies || 0}</Text>
+                </View>
+              </View>
+
+              <View style={styles.sectionDivider} />
+
+              {selectedBook?.description && (
+                <View style={styles.descriptionSection}>
+                  <Text style={styles.sectionTitle}>Description</Text>
+                  <Text style={styles.bookDescription}>{selectedBook.description}</Text>
+                </View>
+              )}
+
+              {!isAvailableBook && (
+                <>
+                  <View style={styles.sectionDivider} />
+
+                  <View style={styles.borrowingSection}>
+                    <Text style={styles.sectionTitle}>Borrowing Timeline</Text>
+                    
+                    {selectedBook?.request_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Request Date:</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(selectedBook.request_date).toLocaleDateString()} at {new Date(selectedBook.request_date).toLocaleTimeString()}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {selectedBook?.borrow_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Borrow Date:</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(selectedBook.borrow_date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {selectedBook?.due_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Due Date:</Text>
+                        <Text style={[styles.detailValue, 
+                          selectedBook.status === "overdue" && styles.overdueText
+                        ]}>
+                          {new Date(selectedBook.due_date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {selectedBook?.return_date && (
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Return Date:</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(selectedBook.return_date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {selectedBook?.fine_amount > 0 && (
+                      <View style={styles.fineContainer}>
+                        <Text style={styles.fineLabel}>Fine Amount:</Text>
+                        <Text style={styles.fineAmount}>${selectedBook.fine_amount}</Text>
+                      </View>
+                    )}
+                  </View>
+                </>
+              )}
+            </View>
+          </ScrollView>
+
+          <View style={styles.bookDetailsActions}>
+            {isAvailableBook ? (
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  styles.borrowButton,
+                  selectedBook?.available_copies === 0 && styles.disabledButton
+                ]}
+                onPress={() => {
+                  borrowBook(selectedBook._id);
+                  setBookDetailsVisible(false);
+                }}
+                disabled={selectedBook?.available_copies === 0}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.buttonText}>
+                  {selectedBook?.available_copies === 0 ? "Not Available" : "Request to Borrow"}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              (selectedBook?.status === "borrowed" || selectedBook?.status === "overdue") && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.returnButton]}
+                  onPress={() => {
+                    returnBook(selectedBook._id);
+                    setBookDetailsVisible(false);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>Return Book</Text>
+                </TouchableOpacity>
+              )
+            )}
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.closeDetailsButton]}
+              onPress={() => setBookDetailsVisible(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   const renderReceipt = () => (
     <Modal
       visible={receiptVisible}
       transparent={true}
-      animationType="fade"
+      animationType="slide"
       onRequestClose={() => setReceiptVisible(false)}
     >
       <View style={styles.receiptModalOverlay}>
         <View style={styles.receiptContainer}>
           <View style={styles.receiptHeader}>
             <Text style={styles.receiptHeaderText}>LIBRARY BORROW REQUEST</Text>
-            <View style={styles.receiptHeaderLine} />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setReceiptVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.receiptBody}>
-            <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>REQUEST NO.</Text>
-              <Text style={styles.receiptValue}>{receiptData?.transactionId}</Text>
-            </View>
+          <ScrollView style={styles.receiptScrollView} showsVerticalScrollIndicator={false}>
+            <View style={styles.receiptBody}>
+              <View style={styles.receiptSection}>
+                <Text style={styles.receiptLabel}>REQUEST NO.</Text>
+                <Text style={styles.receiptValue}>{receiptData?.transactionId}</Text>
+              </View>
 
-            <View style={styles.receiptDivider} />
+              <View style={styles.receiptDivider} />
 
-            <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>DATE</Text>
-              <Text style={styles.receiptValue}>{receiptData?.requestDate}</Text>
-            </View>
+              <View style={styles.receiptSection}>
+                <Text style={styles.receiptLabel}>DATE</Text>
+                <Text style={styles.receiptValue}>{receiptData?.requestDate}</Text>
+              </View>
 
-            <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>TIME</Text>
-              <Text style={styles.receiptValue}>{receiptData?.requestTime}</Text>
-            </View>
+              <View style={styles.receiptSection}>
+                <Text style={styles.receiptLabel}>TIME</Text>
+                <Text style={styles.receiptValue}>{receiptData?.requestTime}</Text>
+              </View>
 
-            <View style={styles.receiptDivider} />
+              <View style={styles.receiptDivider} />
 
-            <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>MEMBER NAME</Text>
-              <Text style={styles.receiptValue}>{receiptData?.memberName}</Text>
-            </View>
+              <View style={styles.receiptSection}>
+                <Text style={styles.receiptLabel}>MEMBER NAME</Text>
+                <Text style={styles.receiptValue}>{receiptData?.memberName}</Text>
+              </View>
 
-            <View style={styles.receiptDivider} />
+              <View style={styles.receiptDivider} />
 
-            <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>BOOK TITLE</Text>
-              <Text style={styles.receiptBookTitle}>{receiptData?.bookTitle}</Text>
-            </View>
+              <View style={styles.receiptSection}>
+                <Text style={styles.receiptLabel}>BOOK TITLE</Text>
+                <Text style={styles.receiptBookTitle}>{receiptData?.bookTitle}</Text>
+              </View>
 
-            <View style={styles.receiptDivider} />
+              <View style={styles.receiptDivider} />
 
-            <View style={styles.receiptSection}>
-              <Text style={styles.receiptLabel}>STATUS:</Text>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(receiptData?.status) }]}>
-                <Text style={styles.statusText}>{getStatusText(receiptData?.status)}</Text>
+              <View style={styles.receiptSection}>
+                <Text style={styles.receiptLabel}>STATUS:</Text>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(receiptData?.status) }]}>
+                  <Text style={styles.statusText}>{getStatusText(receiptData?.status)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.receiptDividerThick} />
+
+              <View style={styles.receiptFooterSection}>
+                <Text style={styles.receiptFooterText}>
+                  {receiptData?.note}
+                </Text>
+                <Text style={styles.receiptFooterNote}>
+                  You will receive a notification once your request is approved.
+                </Text>
+              </View>
+
+              <View style={styles.receiptBarcode}>
+                <View style={styles.barcodeLines}>
+                  {[...Array(20)].map((_, i) => (
+                    <View 
+                      key={i} 
+                      style={[
+                        styles.barcodeLine,
+                        { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1 }
+                      ]} 
+                    />
+                  ))}
+                </View>
+                <Text style={styles.barcodeText}>{receiptData?.transactionId}</Text>
               </View>
             </View>
-
-            <View style={styles.receiptDividerThick} />
-
-            <View style={styles.receiptFooterSection}>
-              <Text style={styles.receiptFooterText}>
-                {receiptData?.note}
-              </Text>
-              <Text style={styles.receiptFooterNote}>
-                You will receive a notification once your request is approved.
-              </Text>
-            </View>
-
-            <View style={styles.receiptBarcode}>
-              <View style={styles.barcodeLines}>
-                {[...Array(20)].map((_, i) => (
-                  <View 
-                    key={i} 
-                    style={[
-                      styles.barcodeLine,
-                      { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1 }
-                    ]} 
-                  />
-                ))}
-              </View>
-              <Text style={styles.barcodeText}>{receiptData?.transactionId}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.receiptCloseButton}
-            onPress={() => setReceiptVisible(false)}
-          >
-            <Text style={styles.receiptCloseButtonText}>CLOSE</Text>
-          </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -344,22 +828,27 @@ export default function UserDashboard({ navigation, route }) {
               activeOpacity={1}
               onPressIn={() => animateCard(book._id, 0.97)}
               onPressOut={() => animateCard(book._id, 1)}
+              onPress={() => showBookDetails(book, true)}
             >
               <View style={styles.bookSpine} />
               <View style={styles.bookContent}>
-                {/* Book Image Section */}
-                {book.image_url ? (
-                  <Image 
-                    source={{ uri: book.image_url }} 
-                    style={styles.bookImage}
-                    resizeMode="cover"
-                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
-                  />
-                ) : (
-                  <View style={styles.bookImagePlaceholder}>
-                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
-                  </View>
-                )}
+                <TouchableOpacity
+                  onPress={() => showBookDetails(book, true)}
+                  activeOpacity={0.8}
+                >
+                  {book.image_url ? (
+                    <Image 
+                      source={{ uri: book.image_url }} 
+                      style={styles.bookImage}
+                      resizeMode="cover"
+                      onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                    />
+                  ) : (
+                    <View style={styles.bookImagePlaceholder}>
+                      <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
                 
                 <View style={styles.bookCornerDecoration} />
                 <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
@@ -377,6 +866,13 @@ export default function UserDashboard({ navigation, route }) {
                     </View>
                   </View>
                 </View>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.viewDetailsButton]}
+                  onPress={() => showBookDetails(book, true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>View Details</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.actionButton,
@@ -424,27 +920,41 @@ export default function UserDashboard({ navigation, route }) {
                 activeOpacity={1}
                 onPressIn={() => animateCard(record._id, 0.97)}
                 onPressOut={() => animateCard(record._id, 1)}
+                onPress={() => showBookDetails({...record, ...record.book}, false)}
               >
                 <View style={[styles.bookSpine, { backgroundColor: getStatusColor(status) }]} />
                 <View style={styles.bookContent}>
-                  {/* Book Image Section */}
-                  {record.book?.image_url ? (
-                    <Image 
-                      source={{ uri: record.book.image_url }} 
-                      style={styles.bookImage}
-                      resizeMode="cover"
-                      onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
-                    />
-                  ) : (
-                    <View style={styles.bookImagePlaceholder}>
-                      <Text style={styles.bookImagePlaceholderText}>📚</Text>
-                    </View>
-                  )}
+                  <TouchableOpacity
+                    onPress={() => showBookDetails({...record, ...record.book}, false)}
+                    activeOpacity={0.8}
+                  >
+                    {record.book?.image_url ? (
+                      <Image 
+                        source={{ uri: record.book.image_url }} 
+                        style={styles.bookImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.bookImagePlaceholder}>
+                        <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
                   
                   <View style={[styles.bookCornerDecoration, { backgroundColor: getStatusColor(status) }]} />
                   <Text style={styles.bookTitle} numberOfLines={2}>{record.book?.title}</Text>
                   <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
                   <View style={styles.divider} />
+                  
+                  {/* Borrow ID Display */}
+                  <View style={styles.borrowIdCard}>
+                    <Text style={styles.borrowIdCardLabel}>BORROW ID</Text>
+                    <Text style={styles.borrowIdCardValue}>{record._id}</Text>
+                    <Text style={styles.borrowIdCardNote}>
+                      Show this to the librarian
+                    </Text>
+                  </View>
+                  
                   <View style={styles.bookDetails}>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Status</Text>
@@ -462,15 +972,6 @@ export default function UserDashboard({ navigation, route }) {
                       </View>
                     )}
                     
-                    {record.borrow_date && (
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Borrowed</Text>
-                        <Text style={styles.detailValue}>
-                          {new Date(record.borrow_date).toLocaleDateString()}
-                        </Text>
-                      </View>
-                    )}
-                    
                     {record.due_date && (
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>Due Date</Text>
@@ -480,6 +981,14 @@ export default function UserDashboard({ navigation, route }) {
                       </View>
                     )}
                   </View>
+                  
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.viewDetailsButton]}
+                    onPress={() => showBookDetails({...record, ...record.book}, false)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.buttonText}>View Details</Text>
+                  </TouchableOpacity>
                   
                   {status === "borrowed" || status === "overdue" ? (
                     <TouchableOpacity
@@ -524,27 +1033,38 @@ export default function UserDashboard({ navigation, route }) {
               activeOpacity={1}
               onPressIn={() => animateCard(record._id, 0.97)}
               onPressOut={() => animateCard(record._id, 1)}
+              onPress={() => showBookDetails({...record, ...record.book}, false)}
             >
               <View style={[styles.bookSpine, { backgroundColor: getStatusColor(record.status) }]} />
               <View style={styles.bookContent}>
-                {/* Book Image Section */}
-                {record.book?.image_url ? (
-                  <Image 
-                    source={{ uri: record.book.image_url }} 
-                    style={styles.bookImage}
-                    resizeMode="cover"
-                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
-                  />
-                ) : (
-                  <View style={styles.bookImagePlaceholder}>
-                    <Text style={styles.bookImagePlaceholderText}>📚</Text>
-                  </View>
-                )}
+                <TouchableOpacity
+                  onPress={() => showBookDetails({...record, ...record.book}, false)}
+                  activeOpacity={0.8}
+                >
+                  {record.book?.image_url ? (
+                    <Image 
+                      source={{ uri: record.book.image_url }} 
+                      style={styles.bookImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.bookImagePlaceholder}>
+                      <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
                 
                 <View style={[styles.bookCornerDecoration, { backgroundColor: getStatusColor(record.status) }]} />
                 <Text style={styles.bookTitle} numberOfLines={2}>{record.book?.title}</Text>
                 <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
                 <View style={styles.divider} />
+                
+                {/* Borrow ID Display for History */}
+                <View style={styles.borrowIdCard}>
+                  <Text style={styles.borrowIdCardLabel}>BORROW ID</Text>
+                  <Text style={styles.borrowIdCardValue}>{record._id}</Text>
+                </View>
+                
                 <View style={styles.bookDetails}>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Status</Text>
@@ -586,6 +1106,14 @@ export default function UserDashboard({ navigation, route }) {
                     </View>
                   )}
                 </View>
+                
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.viewDetailsButton]}
+                  onPress={() => showBookDetails({...record, ...record.book}, false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>View Details</Text>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           </Animated.View>
@@ -635,217 +1163,280 @@ export default function UserDashboard({ navigation, route }) {
                   <TouchableOpacity 
                     onPress={() => deleteNotification(notification._id)}
                     style={styles.notificationAction}
-                  >
-                    <Text style={styles.notificationActionText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <Text style={styles.notificationMessage}>{notification.message}</Text>
-              <Text style={styles.notificationTime}>
-                {new Date(notification.created_at).toLocaleString()}
-              </Text>
-              {notification.type === "overdue" && (
-                <View style={styles.overdueIndicator}>
-                  <Text style={styles.overdueIndicatorText}>OVERDUE</Text>
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-    </Animated.View>
-  );
-
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingSpinner}>
-            <View style={styles.loadingDot} />
-            <View style={[styles.loadingDot, styles.loadingDot2]} />
-            <View style={[styles.loadingDot, styles.loadingDot3]} />
-          </View>
-          <Text style={styles.loadingText}>Loading your library...</Text>
-        </View>
-      );
-    }
-
-    switch (activeSection) {
-      case "available":
-        return renderAvailableBooks();
-      case "borrowed":
-        return renderBorrowedBooks();
-      case "history":
-        return renderBorrowingHistory();
-      case "notifications":
-        return renderNotifications();
-      case "profile":
-        return (
-          <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.headerAccent} />
-              <Text style={styles.sectionTitle}>Profile Settings</Text>
-            </View>
-            <View style={styles.profileCard}>
-              <View style={styles.profileHeader}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>{name.charAt(0).toUpperCase()}</Text>
-                  <View style={styles.avatarRing} />
-                </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{name}</Text>
-                  <Text style={styles.profileRole}>Library Member</Text>
-                  <View style={styles.profileBadge}>
-                    <Text style={styles.profileBadgeText}>ACTIVE</Text>
+                    >
+                      <Text style={styles.notificationActionText}>Delete</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
+                <Text style={styles.notificationMessage}>{notification.message}</Text>
+                <Text style={styles.notificationTime}>
+                  {new Date(notification.created_at).toLocaleString()}
+                </Text>
+                {notification.type === "overdue" && (
+                  <View style={styles.overdueIndicator}>
+                    <Text style={styles.overdueIndicatorText}>OVERDUE</Text>
+                  </View>
+                )}
               </View>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.logoutButton]}
-                onPress={() => navigation.replace("Login")}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        );
-      default:
-        return null;
-    }
-  };
+            ))}
+          </View>
+        )}
+      </Animated.View>
+    );
 
-  return (
-    <View style={styles.container}>
-      {isDrawerOpen && (
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={closeDrawer}
-        />
-      )}
-
-      <Animated.View
-        style={[
-          styles.sidebar,
-          {
-            transform: [{ translateX: drawerAnim }],
-          },
-        ]}
-      >
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>📚</Text>
-          <Text style={styles.libraryName}>IT Thesis Library</Text>
-          <View style={styles.logoUnderline} />
+    const renderProfileSection = () => (
+      <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.headerAccent} />
+          <Text style={styles.sectionTitle}>Profile Settings</Text>
         </View>
         
-        <View style={styles.menu}>
-          <TouchableOpacity
-            style={[styles.menuItem, activeSection === "available" && styles.activeMenuItem]}
-            onPress={() => handleMenuPress("available")}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemContent}>
-              {activeSection === "available" && <View style={styles.menuIndicator} />}
-              <Text style={[styles.menuText, activeSection === "available" && styles.activeMenuText]}>
-                Available Books
-              </Text>
+        <View style={styles.profileCard}>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarCircleLarge}>
+              {profileData.profile_image ? (
+                <Image 
+                  source={{ uri: profileData.profile_image }} 
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <Text style={styles.avatarTextLarge}>
+                  {profileData.name?.charAt(0).toUpperCase() || 'U'}
+                </Text>
+              )}
+              <View style={styles.avatarRingLarge} />
             </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.menuItem, activeSection === "borrowed" && styles.activeMenuItem]}
-            onPress={() => handleMenuPress("borrowed")}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemContent}>
-              {activeSection === "borrowed" && <View style={styles.menuIndicator} />}
-              <Text style={[styles.menuText, activeSection === "borrowed" && styles.activeMenuText]}>
-                My Borrowed Books
-              </Text>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{profileData.name || name}</Text>
+              <Text style={styles.profileEmail}>{profileData.email}</Text>
+              <View style={styles.profileBadge}>
+                <Text style={styles.profileBadgeText}>
+                  {profileData.role?.toUpperCase() || 'MEMBER'}
+                </Text>
+              </View>
             </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.menuItem, activeSection === "history" && styles.activeMenuItem]}
-            onPress={() => handleMenuPress("history")}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemContent}>
-              {activeSection === "history" && <View style={styles.menuIndicator} />}
-              <Text style={[styles.menuText, activeSection === "history" && styles.activeMenuText]}>
-                Borrowing History
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.menuItem, activeSection === "notifications" && styles.activeMenuItem]}
-            onPress={() => handleMenuPress("notifications")}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemContent}>
-              {activeSection === "notifications" && <View style={styles.menuIndicator} />}
-              <Text style={[styles.menuText, activeSection === "notifications" && styles.activeMenuText]}>
-                Notifications
-                {notifications.filter(n => !n.is_read).length > 0 && (
-                  <Text style={styles.notificationBadge}>
-                    {" "}({notifications.filter(n => !n.is_read).length})
-                  </Text>
-                )}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.menuItem, activeSection === "profile" && styles.activeMenuItem]}
-            onPress={() => handleMenuPress("profile")}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuItemContent}>
-              {activeSection === "profile" && <View style={styles.menuIndicator} />}
-              <Text style={[styles.menuText, activeSection === "profile" && styles.activeMenuText]}>
-                Profile Settings
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+          </View>
 
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.menuButton} 
-            onPress={toggleDrawer}
-            activeOpacity={0.7}
-          >
-            <View style={styles.hamburger}>
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
+          {/* Profile Details */}
+          <View style={styles.profileDetails}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Date of Birth</Text>
+              <Text style={styles.detailValue}>{profileData.dob || 'Not set'}</Text>
             </View>
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={styles.welcomeTitle}>Welcome back, {name}</Text>
-            <Text style={styles.welcomeSubtitle}>Explore your literary journey</Text>
+            
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Gender</Text>
+              <Text style={styles.detailValue}>{profileData.gender || 'Not set'}</Text>
+            </View>
+            
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Phone</Text>
+              <Text style={styles.detailValue}>{profileData.phone || 'Not set'}</Text>
+            </View>
+            
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Address</Text>
+              <Text style={styles.detailValue}>{profileData.address || 'Not set'}</Text>
+            </View>
+            
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Member Since</Text>
+              <Text style={styles.detailValue}>
+                {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'N/A'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.profileActions}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.editProfileButton]}
+              onPress={openEditProfile}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Edit Profile</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.logoutButton]}
+              onPress={() => navigation.replace("Login")}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <ScrollView 
-          style={styles.scrollView} 
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#007AFF']}
-            />
-          }
-        >
-          {renderContent()}
-        </ScrollView>
-      </View>
+      </Animated.View>
+    );
 
-      {renderReceipt()}
-    </View>
-  );
+    const renderContent = () => {
+      if (loading) {
+        return (
+          <View style={styles.loadingContainer}>
+            <View style={styles.loadingSpinner}>
+              <View style={styles.loadingDot} />
+              <View style={[styles.loadingDot, styles.loadingDot2]} />
+              <View style={[styles.loadingDot, styles.loadingDot3]} />
+            </View>
+            <Text style={styles.loadingText}>Loading your library...</Text>
+          </View>
+        );
+      }
+
+      switch (activeSection) {
+        case "available":
+          return renderAvailableBooks();
+        case "borrowed":
+          return renderBorrowedBooks();
+        case "history":
+          return renderBorrowingHistory();
+        case "notifications":
+          return renderNotifications();
+        case "profile":
+          return renderProfileSection();
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        {isDrawerOpen && (
+          <TouchableOpacity
+            style={styles.overlay}
+            activeOpacity={1}
+            onPress={closeDrawer}
+          />
+        )}
+
+        <Animated.View
+          style={[
+            styles.sidebar,
+            {
+              transform: [{ translateX: drawerAnim }],
+            },
+          ]}
+        >
+          <View style={styles.logoContainer}>
+            <View style={styles.logoImageContainer}>
+              <Image 
+                source={require('../assets/images/TUP.png')} 
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.libraryName}>IT Thesis Library</Text>
+            <View style={styles.logoUnderline} />
+          </View>
+          
+          <View style={styles.menu}>
+            <TouchableOpacity
+              style={[styles.menuItem, activeSection === "available" && styles.activeMenuItem]}
+              onPress={() => handleMenuPress("available")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                {activeSection === "available" && <View style={styles.menuIndicator} />}
+                <Text style={[styles.menuText, activeSection === "available" && styles.activeMenuText]}>
+                  Available Books
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.menuItem, activeSection === "borrowed" && styles.activeMenuItem]}
+              onPress={() => handleMenuPress("borrowed")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                {activeSection === "borrowed" && <View style={styles.menuIndicator} />}
+                <Text style={[styles.menuText, activeSection === "borrowed" && styles.activeMenuText]}>
+                  My Borrowed Books
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.menuItem, activeSection === "history" && styles.activeMenuItem]}
+              onPress={() => handleMenuPress("history")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                {activeSection === "history" && <View style={styles.menuIndicator} />}
+                <Text style={[styles.menuText, activeSection === "history" && styles.activeMenuText]}>
+                  Borrowing History
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.menuItem, activeSection === "notifications" && styles.activeMenuItem]}
+              onPress={() => handleMenuPress("notifications")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                {activeSection === "notifications" && <View style={styles.menuIndicator} />}
+                <Text style={[styles.menuText, activeSection === "notifications" && styles.activeMenuText]}>
+                  Notifications
+                  {notifications.filter(n => !n.is_read).length > 0 && (
+                    <Text style={styles.notificationBadge}>
+                      {" "}({notifications.filter(n => !n.is_read).length})
+                    </Text>
+                  )}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.menuItem, activeSection === "profile" && styles.activeMenuItem]}
+              onPress={() => handleMenuPress("profile")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                {activeSection === "profile" && <View style={styles.menuIndicator} />}
+                <Text style={[styles.menuText, activeSection === "profile" && styles.activeMenuText]}>
+                  Profile Settings
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.menuButton} 
+              onPress={toggleDrawer}
+              activeOpacity={0.7}
+            >
+              <View style={styles.hamburger}>
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+              </View>
+            </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={styles.welcomeTitle}>Welcome back, {profileData.name || name}</Text>
+              <Text style={styles.welcomeSubtitle}>Explore your literary journey</Text>
+            </View>
+          </View>
+          <ScrollView 
+            style={styles.scrollView} 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#007AFF']}
+              />
+            }
+          >
+            {renderContent()}
+          </ScrollView>
+        </View>
+
+        {renderBookDetailsModal()}
+        {renderReceipt()}
+        {renderEditProfileModal()}
+      </View>
+    );
 }
