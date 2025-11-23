@@ -39,6 +39,13 @@ export default function UserDashboard({ navigation, route }) {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
+  // Search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredAvailableBooks, setFilteredAvailableBooks] = useState([]);
+  const [filteredBorrowedBooks, setFilteredBorrowedBooks] = useState([]);
+  const [filteredHistory, setFilteredHistory] = useState([]);
+  const [filteredNotifications, setFilteredNotifications] = useState([]);
+  
   // Edit Profile States
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -54,6 +61,9 @@ export default function UserDashboard({ navigation, route }) {
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  
+  // Logout Confirmation State
+  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
   
   const DRAWER_WIDTH = 280;
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -79,6 +89,89 @@ export default function UserDashboard({ navigation, route }) {
       useNativeDriver: true,
     }).start();
   }, [activeSection]);
+
+  // Search functionality
+  useEffect(() => {
+    filterData();
+  }, [searchQuery, availableBooks, borrowedBooks, borrowingHistory, notifications, activeSection]);
+
+  const filterData = () => {
+    const query = searchQuery.toLowerCase().trim();
+    
+    if (!query) {
+      setFilteredAvailableBooks(availableBooks);
+      setFilteredBorrowedBooks(borrowedBooks);
+      setFilteredHistory(borrowingHistory);
+      setFilteredNotifications(notifications);
+      return;
+    }
+
+    switch (activeSection) {
+      case "available":
+        const filteredAvailable = availableBooks.filter(book => 
+          book.title?.toLowerCase().includes(query) ||
+          book.author?.toLowerCase().includes(query) ||
+          book.category?.toLowerCase().includes(query) ||
+          book.genre?.toLowerCase().includes(query) ||
+          book.isbn?.toLowerCase().includes(query)
+        );
+        setFilteredAvailableBooks(filteredAvailable);
+        break;
+      
+      case "borrowed":
+        const filteredBorrowed = borrowedBooks.filter(record => 
+          record.book?.title?.toLowerCase().includes(query) ||
+          record.book?.author?.toLowerCase().includes(query) ||
+          record._id?.toLowerCase().includes(query) ||
+          record.status?.toLowerCase().includes(query)
+        );
+        setFilteredBorrowedBooks(filteredBorrowed);
+        break;
+      
+      case "history":
+        const filteredHistory = borrowingHistory.filter(record => 
+          record.book?.title?.toLowerCase().includes(query) ||
+          record.book?.author?.toLowerCase().includes(query) ||
+          record._id?.toLowerCase().includes(query) ||
+          record.status?.toLowerCase().includes(query)
+        );
+        setFilteredHistory(filteredHistory);
+        break;
+      
+      case "notifications":
+        const filteredNotifs = notifications.filter(notification => 
+          notification.title?.toLowerCase().includes(query) ||
+          notification.message?.toLowerCase().includes(query) ||
+          notification.type?.toLowerCase().includes(query)
+        );
+        setFilteredNotifications(filteredNotifs);
+        break;
+      
+      default:
+        break;
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  // Logout Confirmation Function
+  const handleLogout = () => {
+    setLogoutConfirmVisible(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutConfirmVisible(false);
+    // Clear any global states if needed
+    global.authToken = null;
+    global.userName = null;
+    navigation.replace("Login");
+  };
+
+  const cancelLogout = () => {
+    setLogoutConfirmVisible(false);
+  };
 
   const loadProfileData = async () => {
     try {
@@ -136,6 +229,7 @@ export default function UserDashboard({ navigation, route }) {
 
   const handleMenuPress = (section) => {
     setActiveSection(section);
+    setSearchQuery(""); // Clear search when switching sections
     closeDrawer();
     
     setTimeout(() => {
@@ -359,6 +453,141 @@ export default function UserDashboard({ navigation, route }) {
       setUpdatingProfile(false);
     }
   };
+
+  // Search Bar Component
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchInputContainer}>
+        <MaterialCommunityIcons name="magnify" size={20} color="#666" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={`Search ${activeSection}...`}
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <MaterialCommunityIcons name="close-circle" size={20} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  // Welcome Section for Available Books
+  const renderWelcomeSection = () => (
+    <View style={styles.welcomeSection}>
+      <View style={styles.welcomeHeader}>
+        <Image 
+          source={require('../assets/images/TUP.png')}
+          style={styles.welcomeLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.welcomeTitle}>Welcome to IT Library</Text>
+        <Text style={styles.welcomeSubtitle}>
+          Discover thousands of IT thesis papers and research materials
+        </Text>
+      </View>
+
+      <View style={styles.featuresGrid}>
+        <View style={styles.featureCard}>
+          <MaterialCommunityIcons name="book-search" size={40} color="#007AFF" />
+          <Text style={styles.featureTitle}>Browse Collection</Text>
+          <Text style={styles.featureDescription}>
+            Explore our extensive collection of IT thesis papers and research materials
+          </Text>
+        </View>
+
+        <View style={styles.featureCard}>
+          <MaterialCommunityIcons name="clock-outline" size={40} color="#007AFF" />
+          <Text style={styles.featureTitle}>Easy Borrowing</Text>
+          <Text style={styles.featureDescription}>
+            Simple and fast borrowing process with real-time availability status
+          </Text>
+        </View>
+
+        <View style={styles.featureCard}>
+          <MaterialCommunityIcons name="bell-ring" size={40} color="#007AFF" />
+          <Text style={styles.featureTitle}>Get Notified</Text>
+          <Text style={styles.featureDescription}>
+            Receive notifications for due dates and new arrivals
+          </Text>
+        </View>
+
+        <View style={styles.featureCard}>
+          <MaterialCommunityIcons name="history" size={40} color="#007AFF" />
+          <Text style={styles.featureTitle}>Track History</Text>
+          <Text style={styles.featureDescription}>
+            Keep track of all your borrowing activities and history
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.quickStats}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{availableBooks.length}</Text>
+          <Text style={styles.statLabel}>Total Books</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{borrowedBooks.length}</Text>
+          <Text style={styles.statLabel}>Currently Borrowed</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{borrowingHistory.length}</Text>
+          <Text style={styles.statLabel}>Total Borrowed</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // Logout Confirmation Modal
+  const renderLogoutConfirmation = () => (
+    <Modal
+      visible={logoutConfirmVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={cancelLogout}
+    >
+      <View style={styles.logoutModalOverlay}>
+        <View style={styles.logoutModalContainer}>
+          <View style={styles.logoutModalHeader}>
+            <MaterialCommunityIcons name="logout" size={40} color="#FF3B30" />
+            <Text style={styles.logoutModalTitle}>Logout Confirmation</Text>
+          </View>
+          
+          <View style={styles.logoutModalBody}>
+            <Text style={styles.logoutModalText}>
+              Are you sure you want to logout?
+            </Text>
+            <Text style={styles.logoutModalSubtext}>
+              You will need to login again to access your account.
+            </Text>
+          </View>
+          
+          <View style={styles.logoutModalActions}>
+            <TouchableOpacity
+              style={[styles.logoutModalButton, styles.logoutModalCancelButton]}
+              onPress={cancelLogout}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.logoutModalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.logoutModalButton, styles.logoutModalConfirmButton]}
+              onPress={confirmLogout}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="logout" size={18} color="#FFF" />
+              <Text style={styles.logoutModalConfirmText}>Yes, Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 
   const renderEditProfileModal = () => (
     <Modal
@@ -822,8 +1051,30 @@ export default function UserDashboard({ navigation, route }) {
         <View style={styles.headerAccent} />
         <Text style={styles.sectionTitle}>Available Books</Text>
       </View>
+
+      {renderSearchBar()}
+
+      {searchQuery.length === 0 ? (
+        <>
+          {renderWelcomeSection()}
+          
+          <View style={styles.booksSection}>
+            <Text style={styles.subsectionTitle}>Browse Our Collection</Text>
+            <Text style={styles.subsectionDescription}>
+              Discover our curated selection of IT thesis papers and research materials
+            </Text>
+          </View>
+        </>
+      ) : (
+        <View style={styles.searchResultsHeader}>
+          <Text style={styles.searchResultsText}>
+            Found {filteredAvailableBooks.length} results for "{searchQuery}"
+          </Text>
+        </View>
+      )}
+
       <View style={styles.booksGrid}>
-        {availableBooks.map((book) => (
+        {(searchQuery.length > 0 ? filteredAvailableBooks : availableBooks).map((book) => (
           <Animated.View 
             key={book._id}
             style={[
@@ -900,6 +1151,20 @@ export default function UserDashboard({ navigation, route }) {
           </Animated.View>
         ))}
       </View>
+
+      {(searchQuery.length > 0 ? filteredAvailableBooks : availableBooks).length === 0 && (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons name="book-search" size={80} color="#ccc" />
+          <Text style={styles.emptyStateText}>
+            {searchQuery.length > 0 ? "No books found matching your search" : "No books available at the moment"}
+          </Text>
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+              <Text style={styles.clearSearchButtonText}>Clear Search</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </Animated.View>
   );
 
@@ -909,8 +1174,19 @@ export default function UserDashboard({ navigation, route }) {
         <View style={styles.headerAccent} />
         <Text style={styles.sectionTitle}>My Borrowed Books</Text>
       </View>
+
+      {renderSearchBar()}
+
+      {searchQuery.length > 0 && (
+        <View style={styles.searchResultsHeader}>
+          <Text style={styles.searchResultsText}>
+            Found {filteredBorrowedBooks.length} results for "{searchQuery}"
+          </Text>
+        </View>
+      )}
+
       <View style={styles.booksGrid}>
-        {borrowedBooks.map((record) => {
+        {(searchQuery.length > 0 ? filteredBorrowedBooks : borrowedBooks).map((record) => {
           const isOverdue = record.status === "overdue" || (record.due_date && new Date(record.due_date) < new Date());
           const status = record.status || (isOverdue ? "overdue" : "borrowed");
           
@@ -1016,6 +1292,20 @@ export default function UserDashboard({ navigation, route }) {
           );
         })}
       </View>
+
+      {(searchQuery.length > 0 ? filteredBorrowedBooks : borrowedBooks).length === 0 && (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons name="book-account" size={80} color="#ccc" />
+          <Text style={styles.emptyStateText}>
+            {searchQuery.length > 0 ? "No borrowed books found matching your search" : "You haven't borrowed any books yet"}
+          </Text>
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+              <Text style={styles.clearSearchButtonText}>Clear Search</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </Animated.View>
   );
 
@@ -1025,8 +1315,19 @@ export default function UserDashboard({ navigation, route }) {
         <View style={styles.headerAccent} />
         <Text style={styles.sectionTitle}>Borrowing History</Text>
       </View>
+
+      {renderSearchBar()}
+
+      {searchQuery.length > 0 && (
+        <View style={styles.searchResultsHeader}>
+          <Text style={styles.searchResultsText}>
+            Found {filteredHistory.length} results for "{searchQuery}"
+          </Text>
+        </View>
+      )}
+
       <View style={styles.booksGrid}>
-        {borrowingHistory.map((record) => (
+        {(searchQuery.length > 0 ? filteredHistory : borrowingHistory).map((record) => (
           <Animated.View 
             key={record._id}
             style={[
@@ -1125,6 +1426,20 @@ export default function UserDashboard({ navigation, route }) {
           </Animated.View>
         ))}
       </View>
+
+      {(searchQuery.length > 0 ? filteredHistory : borrowingHistory).length === 0 && (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons name="history" size={80} color="#ccc" />
+          <Text style={styles.emptyStateText}>
+            {searchQuery.length > 0 ? "No history found matching your search" : "No borrowing history yet"}
+          </Text>
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+              <Text style={styles.clearSearchButtonText}>Clear Search</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </Animated.View>
   );
 
@@ -1134,20 +1449,37 @@ export default function UserDashboard({ navigation, route }) {
         <View style={styles.headerAccent} />
         <Text style={styles.sectionTitle}>Notifications</Text>
       </View>
+
+      {renderSearchBar()}
+
+      {searchQuery.length > 0 && (
+        <View style={styles.searchResultsHeader}>
+          <Text style={styles.searchResultsText}>
+            Found {filteredNotifications.length} results for "{searchQuery}"
+          </Text>
+        </View>
+      )}
       
-      {notifications.length === 0 ? (
+      {(searchQuery.length > 0 ? filteredNotifications : notifications).length === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyStateCircle}>
             <MaterialCommunityIcons name="bell-off" size={60} color="#ccc" />
           </View>
-          <Text style={styles.emptyStateText}>No new notifications</Text>
+          <Text style={styles.emptyStateText}>
+            {searchQuery.length > 0 ? "No notifications found matching your search" : "No new notifications"}
+          </Text>
           <Text style={styles.emptyStateSubtext}>
             We'll notify you about due dates and updates
           </Text>
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+              <Text style={styles.clearSearchButtonText}>Clear Search</Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <View style={styles.notificationsList}>
-          {notifications.map((notification) => (
+          {(searchQuery.length > 0 ? filteredNotifications : notifications).map((notification) => (
             <View 
               key={notification._id} 
               style={[
@@ -1289,7 +1621,7 @@ export default function UserDashboard({ navigation, route }) {
           
           <TouchableOpacity
             style={[styles.actionButton, styles.logoutButton]}
-            onPress={() => navigation.replace("Login")}
+            onPress={handleLogout}
             activeOpacity={0.8}
           >
             <MaterialCommunityIcons name="logout" size={20} color="#FF3B30" />
@@ -1426,6 +1758,7 @@ export default function UserDashboard({ navigation, route }) {
       {renderBookDetailsModal()}
       {renderReceipt()}
       {renderEditProfileModal()}
+      {renderLogoutConfirmation()}
     </View>
   );
 }

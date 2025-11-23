@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, Image } from "react-native";
+import { Ionicons } from "@expo/vector-icons"; // Make sure to install this package
 import API from "../utils/api";
 
 export default function LoginScreen({ navigation }) {
@@ -10,6 +11,7 @@ export default function LoginScreen({ navigation }) {
   const [passwordError, setPasswordError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
 
   const validateEmail = (text) => {
     setEmail(text);
@@ -28,6 +30,10 @@ export default function LoginScreen({ navigation }) {
     } else {
       setPasswordError("");
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleLogin = async () => {
@@ -65,7 +71,6 @@ export default function LoginScreen({ navigation }) {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -106,20 +111,33 @@ export default function LoginScreen({ navigation }) {
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            value={password}
-            onChangeText={validatePassword}
-            onFocus={() => setFocusedField("password")}
-            onBlur={() => setFocusedField(null)}
-            secureTextEntry
-            style={[
-              styles.input,
-              focusedField === "password" && styles.inputFocused,
-              passwordError && styles.inputError
-            ]}
-            placeholder="Enter your password"
-            placeholderTextColor="#999"
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              value={password}
+              onChangeText={validatePassword}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              secureTextEntry={!showPassword}
+              style={[
+                styles.passwordInput,
+                focusedField === "password" && styles.inputFocused,
+                passwordError && styles.inputError
+              ]}
+              placeholder="Enter your password"
+              placeholderTextColor="#999"
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={togglePasswordVisibility}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={24} 
+                color="#007AFF" 
+              />
+            </TouchableOpacity>
+          </View>
           {passwordError ? (
             <Text style={styles.errorText}>{passwordError}</Text>
           ) : null}
@@ -230,6 +248,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333333",
     backgroundColor: "#F8FBFF", // Very light sky blue background
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  passwordInput: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: "#E0F0FF", // Light sky blue border
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    color: "#333333",
+    backgroundColor: "#F8FBFF", // Very light sky blue background
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 14,
+    padding: 4,
   },
   inputFocused: {
     borderColor: "#007AFF", // Sky blue border when focused

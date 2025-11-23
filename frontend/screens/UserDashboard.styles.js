@@ -7,7 +7,7 @@ export default StyleSheet.create({
   // Main Container
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F0F8FF', // Sky blue background
   },
   
   overlay: {
@@ -41,7 +41,7 @@ export default StyleSheet.create({
     paddingBottom: 30,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#E0F0FF', // Light sky blue border
     alignItems: 'center',
   },
 
@@ -64,7 +64,7 @@ export default StyleSheet.create({
   libraryName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#333',
+    color: '#007AFF', // Sky blue color
     textAlign: 'center',
     marginTop: 8,
   },
@@ -72,7 +72,7 @@ export default StyleSheet.create({
   logoUnderline: {
     width: 40,
     height: 3,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     marginTop: 8,
     borderRadius: 1.5,
   },
@@ -122,7 +122,7 @@ export default StyleSheet.create({
   },
 
   activeMenuText: {
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
     fontWeight: '600',
   },
 
@@ -133,7 +133,7 @@ export default StyleSheet.create({
     marginTop: -12,
     width: 4,
     height: 24,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     borderRadius: 2,
   },
 
@@ -167,7 +167,7 @@ export default StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#E0F0FF', // Light sky blue border
   },
 
   menuButton: {
@@ -195,12 +195,12 @@ export default StyleSheet.create({
   welcomeTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
+    color: '#007AFF', // Sky blue
   },
 
   welcomeSubtitle: {
     fontSize: 13,
-    color: '#888',
+    color: '#66B2FF', // Light sky blue
     marginTop: 2,
   },
 
@@ -225,7 +225,7 @@ export default StyleSheet.create({
   headerAccent: {
     width: 4,
     height: 24,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     borderRadius: 2,
     marginRight: 12,
   },
@@ -233,7 +233,169 @@ export default StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: '#007AFF', // Sky blue
+  },
+
+  // Search Bar Styles
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0F0FF', // Light sky blue border
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FBFF', // Very light sky blue
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#E0F0FF', // Light sky blue border
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
     color: '#333',
+  },
+  clearButton: {
+    padding: 5,
+  },
+  searchResultsHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#F8FBFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0F0FF',
+  },
+  searchResultsText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+
+  // Welcome Section Styles
+  welcomeSection: {
+    backgroundColor: '#FFFFFF',
+    margin: 20,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E0F0FF',
+  },
+  welcomeHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  welcomeLogo: {
+    width: 80,
+    height: 80,
+    marginBottom: 15,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#66B2FF',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  featureCard: {
+    width: '48%',
+    backgroundColor: '#F8FBFF',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E0F0FF',
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginTop: 8,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  featureDescription: {
+    fontSize: 11,
+    color: '#66B2FF',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  quickStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: '#E0F0FF',
+    textAlign: 'center',
+  },
+  booksSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  subsectionDescription: {
+    fontSize: 13,
+    color: '#66B2FF',
+    lineHeight: 18,
+  },
+
+  // Clear Search Button
+  clearSearchButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  clearSearchButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // Books Grid
@@ -241,6 +403,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingHorizontal: 12,
   },
 
   bookCard: {
@@ -249,17 +412,19 @@ export default StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E0F0FF', // Light sky blue border
   },
 
   bookSpine: {
     width: 4,
     height: '100%',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     position: 'absolute',
     left: 0,
   },
@@ -295,7 +460,7 @@ export default StyleSheet.create({
     right: 0,
     width: 30,
     height: 30,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     opacity: 0.1,
     borderBottomLeftRadius: 30,
   },
@@ -316,7 +481,7 @@ export default StyleSheet.create({
 
   divider: {
     height: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#E0F0FF', // Light sky blue
     marginBottom: 8,
   },
 
@@ -378,7 +543,7 @@ export default StyleSheet.create({
   borrowIdCard: {
     backgroundColor: '#F0F4FF',
     borderLeftWidth: 3,
-    borderLeftColor: '#007AFF',
+    borderLeftColor: '#007AFF', // Sky blue
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
@@ -387,7 +552,7 @@ export default StyleSheet.create({
 
   borrowIdCardLabel: {
     fontSize: 9,
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -421,7 +586,7 @@ export default StyleSheet.create({
   },
 
   borrowButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
   },
 
   returnButton: {
@@ -444,7 +609,13 @@ export default StyleSheet.create({
   },
 
   viewDetailsButtonText: {
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
+  },
+
+  closeButtonText: {
+    color: '#333',
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   // Modal Styles
@@ -469,7 +640,7 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#E0F0FF', // Light sky blue border
   },
 
   editProfileHeaderText: {
@@ -480,11 +651,6 @@ export default StyleSheet.create({
 
   closeButton: {
     padding: 8,
-  },
-
-  closeButtonText: {
-    fontSize: 24,
-    color: '#333',
   },
 
   editProfileScrollView: {
@@ -511,7 +677,7 @@ export default StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#007AFF',
+    borderColor: '#007AFF', // Sky blue
   },
 
   profileImagePlaceholderLarge: {
@@ -522,13 +688,13 @@ export default StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#007AFF',
+    borderColor: '#007AFF', // Sky blue
   },
 
   profileImagePlaceholderTextLarge: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
   },
 
   cameraIconOverlay: {
@@ -538,7 +704,7 @@ export default StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -572,7 +738,7 @@ export default StyleSheet.create({
     paddingVertical: 10,
     fontSize: 13,
     color: '#333',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FBFF', // Very light sky blue
   },
 
   disabledInput: {
@@ -600,12 +766,12 @@ export default StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 4,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FBFF', // Very light sky blue
   },
 
   genderOptionSelected: {
     backgroundColor: '#E3F2FD',
-    borderColor: '#007AFF',
+    borderColor: '#007AFF', // Sky blue
   },
 
   genderOptionText: {
@@ -615,7 +781,7 @@ export default StyleSheet.create({
   },
 
   genderOptionTextSelected: {
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
   },
 
   editProfileActions: {
@@ -623,13 +789,13 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
+    borderTopColor: '#E0F0FF', // Light sky blue border
     gap: 12,
   },
 
   saveButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
   },
 
   cancelButton: {
@@ -664,7 +830,7 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#E0F0FF', // Light sky blue border
   },
 
   bookDetailsHeaderText: {
@@ -749,7 +915,7 @@ export default StyleSheet.create({
 
   sectionDivider: {
     height: 1,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#E0F0FF', // Light sky blue
     marginVertical: 16,
   },
 
@@ -760,7 +926,7 @@ export default StyleSheet.create({
   borrowIdContainer: {
     backgroundColor: '#F0F4FF',
     borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    borderLeftColor: '#007AFF', // Sky blue
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 8,
@@ -768,7 +934,7 @@ export default StyleSheet.create({
 
   borrowIdLabel: {
     fontSize: 10,
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -838,7 +1004,7 @@ export default StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
+    borderTopColor: '#E0F0FF', // Light sky blue border
     gap: 12,
   },
 
@@ -938,7 +1104,7 @@ export default StyleSheet.create({
 
   receiptFooterNote: {
     fontSize: 11,
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
     marginTop: 6,
     fontStyle: 'italic',
   },
@@ -973,11 +1139,13 @@ export default StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E0F0FF', // Light sky blue border
   },
 
   profileHeader: {
@@ -1004,7 +1172,7 @@ export default StyleSheet.create({
     backgroundColor: '#E3F2FD',
     fontSize: 32,
     fontWeight: '700',
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
     textAlign: 'center',
     textAlignVertical: 'center',
   },
@@ -1015,7 +1183,7 @@ export default StyleSheet.create({
     height: 86,
     borderRadius: 43,
     borderWidth: 2,
-    borderColor: '#007AFF',
+    borderColor: '#007AFF', // Sky blue
     top: -3,
     left: -3,
   },
@@ -1048,14 +1216,14 @@ export default StyleSheet.create({
   profileBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#007AFF',
+    color: '#007AFF', // Sky blue
   },
 
   profileDetails: {
     borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
+    borderTopColor: '#E0F0FF', // Light sky blue border
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#E0F0FF', // Light sky blue border
     paddingVertical: 12,
     marginBottom: 16,
   },
@@ -1078,7 +1246,7 @@ export default StyleSheet.create({
 
   editProfileButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
   },
 
   logoutButton: {
@@ -1096,6 +1264,7 @@ export default StyleSheet.create({
   // Notifications
   notificationsList: {
     gap: 12,
+    paddingHorizontal: 12,
   },
 
   notificationCard: {
@@ -1105,16 +1274,18 @@ export default StyleSheet.create({
     marginBottom: 8,
     borderLeftWidth: 4,
     borderLeftColor: '#E0E0E0',
-    shadowColor: '#000',
+    shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E0F0FF', // Light sky blue border
   },
 
   unreadNotification: {
-    backgroundColor: '#F8F9FA',
-    borderLeftColor: '#007AFF',
+    backgroundColor: '#F8FBFF', // Very light sky blue
+    borderLeftColor: '#007AFF', // Sky blue
   },
 
   notificationHeader: {
@@ -1198,6 +1369,7 @@ export default StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: 60,
+    paddingHorizontal: 20,
   },
 
   emptyStateCircle: {
@@ -1219,6 +1391,7 @@ export default StyleSheet.create({
     fontWeight: '700',
     color: '#333',
     marginBottom: 8,
+    textAlign: 'center',
   },
 
   emptyStateSubtext: {
@@ -1247,7 +1420,7 @@ export default StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Sky blue
     marginHorizontal: 4,
   },
 
@@ -1262,6 +1435,88 @@ export default StyleSheet.create({
   loadingText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: '#66B2FF', // Light sky blue
   },
+
+  // Add these styles to your UserDashboard.styles.js
+
+// Logout Confirmation Modal Styles
+logoutModalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+},
+logoutModalContainer: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  padding: 24,
+  width: '100%',
+  maxWidth: 320,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 12,
+  elevation: 8,
+},
+logoutModalHeader: {
+  alignItems: 'center',
+  marginBottom: 20,
+},
+logoutModalTitle: {
+  fontSize: 20,
+  fontWeight: '700',
+  color: '#333',
+  marginTop: 12,
+  textAlign: 'center',
+},
+logoutModalBody: {
+  marginBottom: 24,
+  alignItems: 'center',
+},
+logoutModalText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#333',
+  textAlign: 'center',
+  marginBottom: 8,
+},
+logoutModalSubtext: {
+  fontSize: 14,
+  color: '#666',
+  textAlign: 'center',
+  lineHeight: 20,
+},
+logoutModalActions: {
+  flexDirection: 'row',
+  gap: 12,
+  width: '100%',
+},
+logoutModalButton: {
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  gap: 8,
+},
+logoutModalCancelButton: {
+  backgroundColor: '#E8E8E8',
+},
+logoutModalConfirmButton: {
+  backgroundColor: '#FF3B30',
+},
+logoutModalCancelText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#333',
+},
+logoutModalConfirmText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#FFFFFF',
+},
 });
