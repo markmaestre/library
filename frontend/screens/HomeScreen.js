@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 
 export default function HomeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState("home");
@@ -9,11 +9,11 @@ export default function HomeScreen({ navigation }) {
       {/* Header Navigation */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoBooks}>
-            <View style={[styles.logoBook, { backgroundColor: "#2563EB" }]} />
-            <View style={[styles.logoBook, { backgroundColor: "#7C3AED" }]} />
-            <View style={[styles.logoBook, { backgroundColor: "#059669" }]} />
-          </View>
+          <Image 
+            source={require('../assets/images/TUP.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.logoText}>IT Library</Text>
         </View>
 
@@ -50,20 +50,7 @@ export default function HomeScreen({ navigation }) {
           {/* Hero Banner */}
           <View style={styles.heroBanner}>
             <View style={styles.heroContent}>
-              <View style={styles.heroBookshelf}>
-                {[65, 80, 70, 75, 68, 85, 72].map((height, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.heroBook,
-                      {
-                        height,
-                        backgroundColor: index % 2 === 0 ? "#2563EB" : "#7C3AED",
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
+          
               <Text style={styles.heroTitle}>IT Library Management System</Text>
               <Text style={styles.heroSubtitle}>
                 Digital platform for efficient management of IT thesis papers, research projects, and academic resources
@@ -115,7 +102,6 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
-         
           {/* Services Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Library Services</Text>
@@ -126,12 +112,7 @@ export default function HomeScreen({ navigation }) {
                   Access thesis papers and research materials online from anywhere
                 </Text>
               </View>
-              <View style={styles.serviceCard}>
-                <Text style={styles.serviceTitle}>Online Reservation</Text>
-                <Text style={styles.serviceDesc}>
-                  Reserve thesis papers in advance for your research needs
-                </Text>
-              </View>
+            
               <View style={styles.serviceCard}>
                 <Text style={styles.serviceTitle}>Research Support</Text>
                 <Text style={styles.serviceDesc}>
@@ -215,7 +196,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.contentBlock}>
             <Text style={styles.contentTitle}>Location</Text>
             <Text style={styles.contentText}>IT Department Library</Text>
-            <Text style={styles.contentText}>IT  Building</Text>
+            <Text style={styles.contentText}>IT Building</Text>
             <Text style={styles.contentText}>TUP-Taguig Campus</Text>
           </View>
 
@@ -243,7 +224,6 @@ export default function HomeScreen({ navigation }) {
                 <Text style={styles.hoursDay}>Saturday</Text>
                 <Text style={styles.hoursTime}>9:00 AM - 1:00 PM</Text>
               </View>
-             
             </View>
           </View>
 
@@ -292,7 +272,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F1E8",
+    backgroundColor: "#F0F8FF", // Sky blue background
   },
   header: {
     backgroundColor: "#FFFFFF",
@@ -300,28 +280,22 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0D5C7",
+    borderBottomColor: "#E0F0FF", // Light sky blue border
   },
   logoContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
   },
-  logoBooks: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 3,
-    marginRight: 10,
-  },
-  logoBook: {
-    width: 8,
-    height: 22,
-    borderRadius: 1,
+  logo: {
+    width: 50,
+    height: 50,
+    marginRight: 12,
   },
   logoText: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
   },
   navLinks: {
     flexDirection: "row",
@@ -332,34 +306,27 @@ const styles = StyleSheet.create({
   },
   navLinkText: {
     fontSize: 16,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
     fontWeight: "500",
   },
   navLinkActive: {
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     fontWeight: "700",
     borderBottomWidth: 2,
-    borderBottomColor: "#6B5A4A",
+    borderBottomColor: "#007AFF",
   },
   heroBanner: {
-    backgroundColor: "#3D3027",
+    backgroundColor: "#007AFF", // Sky blue background
     paddingVertical: 50,
     paddingHorizontal: 20,
   },
   heroContent: {
     alignItems: "center",
   },
-  heroBookshelf: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 6,
-    marginBottom: 25,
-  },
-  heroBook: {
-    width: 20,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: "#5C4033",
+  heroLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
   },
   heroTitle: {
     fontSize: 32,
@@ -371,7 +338,7 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: {
     fontSize: 16,
-    color: "#D0C4B4",
+    color: "#E0F0FF", // Light sky blue text
     textAlign: "center",
     marginBottom: 30,
     lineHeight: 24,
@@ -381,13 +348,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   heroBtnPrimary: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: "center",
   },
   heroBtnPrimaryText: {
-    color: "#FFFFFF",
+    color: "#007AFF", // Sky blue color
     fontSize: 17,
     fontWeight: "700",
   },
@@ -416,12 +383,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     marginBottom: 15,
   },
   sectionLink: {
     fontSize: 15,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
     fontWeight: "600",
   },
   quickAccessGrid: {
@@ -435,51 +402,25 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: "#007AFF",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: "#E0F0FF", // Light sky blue border
   },
   quickAccessTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     marginBottom: 4,
     textAlign: "center",
   },
   quickAccessDesc: {
     fontSize: 13,
-    color: "#9D8B7A",
+    color: "#66B2FF", // Light sky blue
     textAlign: "center",
-  },
-  categoryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  categoryCard: {
-    backgroundColor: "#FFFFFF",
-    width: "31%",
-    padding: 16,
-    borderRadius: 10,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  categoryName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#2C1810",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  categoryCount: {
-    fontSize: 11,
-    color: "#9D8B7A",
   },
   servicesContainer: {
     gap: 12,
@@ -488,25 +429,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 12,
-    shadowColor: "#000",
+    shadowColor: "#007AFF",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: "#E0F0FF", // Light sky blue border
   },
   serviceTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     marginBottom: 8,
   },
   serviceDesc: {
     fontSize: 14,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
     lineHeight: 20,
   },
   ctaSection: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#007AFF", // Sky blue background
     padding: 30,
     marginHorizontal: 20,
     marginBottom: 20,
@@ -522,7 +465,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     fontSize: 15,
-    color: "#E0D5C7",
+    color: "#E0F0FF", // Light sky blue text
     textAlign: "center",
     marginBottom: 25,
     lineHeight: 22,
@@ -535,7 +478,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   ctaButtonText: {
-    color: "#2563EB",
+    color: "#007AFF", // Sky blue color
     fontSize: 17,
     fontWeight: "700",
   },
@@ -550,7 +493,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     marginBottom: 20,
   },
   contentBlock: {
@@ -558,21 +501,23 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     marginBottom: 15,
-    shadowColor: "#000",
+    shadowColor: "#007AFF",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: "#E0F0FF", // Light sky blue border
   },
   contentTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     marginBottom: 12,
   },
   contentText: {
     fontSize: 15,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
     lineHeight: 24,
     marginBottom: 8,
   },
@@ -582,14 +527,14 @@ const styles = StyleSheet.create({
   },
   offerBullet: {
     fontSize: 16,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
     marginRight: 10,
     marginTop: 2,
   },
   offerText: {
     flex: 1,
     fontSize: 15,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
     lineHeight: 22,
   },
   contactRow: {
@@ -597,7 +542,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 15,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
   },
   hoursTable: {
     marginTop: 10,
@@ -607,19 +552,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0D5C7",
+    borderBottomColor: "#E0F0FF", // Light sky blue border
   },
   hoursDay: {
     fontSize: 15,
-    color: "#3D3027",
+    color: "#007AFF", // Sky blue color
     fontWeight: "600",
   },
   hoursTime: {
     fontSize: 15,
-    color: "#6B5A4A",
+    color: "#66B2FF", // Light sky blue
   },
   messageButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#007AFF", // Sky blue background
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: "center",
@@ -630,7 +575,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   footer: {
-    backgroundColor: "#3D3027",
+    backgroundColor: "#007AFF", // Sky blue background
     paddingVertical: 30,
     paddingHorizontal: 20,
   },
@@ -653,16 +598,16 @@ const styles = StyleSheet.create({
   },
   footerLinkText: {
     fontSize: 14,
-    color: "#D0C4B4",
+    color: "#E0F0FF", // Light sky blue text
   },
   footerBottom: {
     borderTopWidth: 1,
-    borderTopColor: "#5C4033",
+    borderTopColor: "#66B2FF", // Light sky blue border
     paddingTop: 20,
     alignItems: "center",
   },
   footerCopyright: {
     fontSize: 13,
-    color: "#9D8B7A",
+    color: "#E0F0FF", // Light sky blue text
   },
 });

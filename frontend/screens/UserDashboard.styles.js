@@ -1,1265 +1,1267 @@
-import { StyleSheet, Dimensions, Platform } from "react-native";
+import { StyleSheet, Dimensions } from 'react-native';
 
-const { width, height } = Dimensions.get("window");
+const { width, height } = Dimensions.get('window');
+const DRAWER_WIDTH = 280;
 
 export default StyleSheet.create({
+  // Main Container
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FA",
+    backgroundColor: '#F8F9FA',
   },
+  
   overlay: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.65)",
-    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 10,
   },
+
+  // Sidebar / Drawer
   sidebar: {
-    position: "absolute",
-    top: 0,
+    position: 'absolute',
     left: 0,
-    bottom: 0,
-    width: 280,
-    backgroundColor: "#0F172A",
-    zIndex: 2,
-    paddingTop: Platform.OS === 'ios' ? 50 : 45,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 3,
-      height: 0,
-    },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 15,
-  },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-    paddingHorizontal: 8,
-  },
-  logoImageContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    top: 0,
+    width: DRAWER_WIDTH,
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    zIndex: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 5,
   },
-  logoImage: {
+
+  logoContainer: {
+    paddingTop: 40,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    alignItems: 'center',
+  },
+
+  logoImageContainer: {
     width: 50,
     height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
+
+  logoImage: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+
   libraryName: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginBottom: 10,
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 8,
   },
+
   logoUnderline: {
-    width: 50,
+    width: 40,
     height: 3,
-    backgroundColor: "#2563EB",
-    borderRadius: 2,
+    backgroundColor: '#007AFF',
+    marginTop: 8,
+    borderRadius: 1.5,
   },
+
   menu: {
+    paddingTop: 20,
     flex: 1,
-    paddingVertical: 8,
   },
+
   menuItem: {
-    marginBottom: 8,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 8,
+    marginBottom: 4,
+    borderRadius: 10,
+    position: 'relative',
   },
+
   activeMenuItem: {
-    backgroundColor: "rgba(37, 99, 235, 0.25)",
-    borderLeftWidth: 4,
-    borderLeftColor: "#2563EB",
-    borderColor: "rgba(37, 99, 235, 0.2)",
+    backgroundColor: '#E3F2FD',
   },
+
   menuItemContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 13,
-    paddingHorizontal: 14,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  menuIndicator: {
-    width: 3,
-    height: 18,
-    backgroundColor: "#2563EB",
-    borderRadius: 2,
-    marginRight: 12,
+
+  menuIcon: {
+    marginRight: 14,
   },
+
+  menuTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
   menuText: {
-    fontSize: 13,
-    color: "#E2E8F0",
-    fontWeight: "500",
-    letterSpacing: 0.2,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
     flex: 1,
   },
+
   activeMenuText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
+    color: '#007AFF',
+    fontWeight: '600',
   },
-  notificationBadge: {
-    color: "#F87171",
-    fontWeight: "700",
-    fontSize: 12,
-    marginLeft: 2,
+
+  activeIndicator: {
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    marginTop: -12,
+    width: 4,
+    height: 24,
+    backgroundColor: '#007AFF',
+    borderRadius: 2,
   },
+
+  badge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+
+  badgeText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // Header
   content: {
     flex: 1,
     marginLeft: 0,
-    backgroundColor: "#F5F7FA",
   },
+
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : 45,
-    paddingBottom: 14,
-    backgroundColor: "#FFFFFF",
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: "#E8EEF5",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
+    borderBottomColor: '#E8E8E8',
   },
+
   menuButton: {
-    padding: 9,
-    marginRight: 12,
-    backgroundColor: "#F1F5FB",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    padding: 10,
+    marginRight: 16,
   },
+
   hamburger: {
-    width: 22,
-    height: 16,
-    justifyContent: "space-between",
+    width: 28,
+    height: 20,
+    justifyContent: 'space-between',
   },
+
   hamburgerLine: {
-    height: 2,
-    backgroundColor: "#334155",
-    borderRadius: 1,
+    width: '100%',
+    height: 2.5,
+    backgroundColor: '#333',
+    borderRadius: 1.25,
   },
+
   headerText: {
     flex: 1,
   },
+
   welcomeTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
-    letterSpacing: -0.2,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
   },
+
   welcomeSubtitle: {
-    fontSize: 12,
-    color: "#71829E",
-    marginTop: 3,
-    letterSpacing: 0.1,
-    fontWeight: "500",
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
   },
+
+  // Main Content
   scrollView: {
     flex: 1,
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
+
   section: {
-    padding: 16,
+    marginBottom: 24,
   },
+
   sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
+
   headerAccent: {
     width: 4,
     height: 24,
-    backgroundColor: "#2563EB",
+    backgroundColor: '#007AFF',
     borderRadius: 2,
-    marginRight: 10,
+    marginRight: 12,
   },
+
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
-    letterSpacing: -0.2,
-    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
   },
+
+  // Books Grid
   booksGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
+
   bookCard: {
-    width: (width - 48) / 2,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    elevation: 3,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#EAEFF7",
+    width: '48%',
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
+
   bookSpine: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
     width: 4,
-    backgroundColor: "#2563EB",
-    zIndex: 1,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
+    height: '100%',
+    backgroundColor: '#007AFF',
+    position: 'absolute',
+    left: 0,
   },
+
   bookContent: {
     padding: 12,
   },
+
   bookImage: {
-    width: "100%",
-    height: 110,
+    width: '100%',
+    height: 160,
     borderRadius: 8,
     marginBottom: 10,
-    backgroundColor: "#F8FAFC",
   },
+
   bookImagePlaceholder: {
-    width: "100%",
-    height: 110,
+    width: '100%',
+    height: 160,
     borderRadius: 8,
-    backgroundColor: "#F0F4F9",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 10,
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderStyle: "dashed",
   },
+
   bookImagePlaceholderText: {
-    fontSize: 28,
-    color: "#A8B5C9",
+    fontSize: 50,
   },
+
   bookCornerDecoration: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     right: 0,
-    width: 0,
-    height: 0,
-    backgroundColor: "transparent",
-    borderStyle: "solid",
-    borderLeftWidth: 12,
-    borderRightWidth: 0,
-    borderBottomWidth: 12,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderBottomColor: "#2563EB",
-    transform: [{ rotate: "90deg" }],
+    width: 30,
+    height: 30,
+    backgroundColor: '#007AFF',
+    opacity: 0.1,
+    borderBottomLeftRadius: 30,
   },
+
   bookTitle: {
     fontSize: 13,
-    fontWeight: "600",
-    color: "#0F172A",
-    marginBottom: 3,
-    lineHeight: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 6,
+    lineHeight: 17,
   },
+
   bookAuthor: {
-    fontSize: 11,
-    color: "#687489",
+    fontSize: 12,
+    color: '#888',
     marginBottom: 8,
-    lineHeight: 14,
-    fontWeight: "500",
   },
+
   divider: {
     height: 1,
-    backgroundColor: "#EFF2F7",
-    marginVertical: 8,
+    backgroundColor: '#E8E8E8',
+    marginBottom: 8,
   },
-  
-  borrowIdCard: {
-    backgroundColor: "#EFF6FF",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: "#2563EB",
-    borderWidth: 1,
-    borderColor: "#D0E3FF",
-  },
-  borrowIdCardLabel: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: "#2563EB",
-    marginBottom: 3,
-    letterSpacing: 0.3,
-  },
-  borrowIdCardValue: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 3,
-    letterSpacing: 0.2,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  borrowIdCardNote: {
-    fontSize: 9,
-    color: "#687489",
-    fontStyle: "italic",
-    lineHeight: 12,
-  },
-  
+
   bookDetails: {
     marginBottom: 10,
   },
+
   detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 6,
   },
+
   detailLabel: {
-    fontSize: 10,
-    color: "#687489",
-    fontWeight: "600",
-    flex: 0.8,
+    fontSize: 11,
+    color: '#888',
+    fontWeight: '500',
   },
+
   detailValue: {
-    fontSize: 10,
-    color: "#0F172A",
-    fontWeight: "600",
-    flex: 1.2,
-    textAlign: "right",
+    fontSize: 11,
+    color: '#333',
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
   },
+
   availabilityBadge: {
-    backgroundColor: "#10B981",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 5,
-    minWidth: 32,
-    alignItems: "center",
+    minWidth: 28,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: '#34C759',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+
   availabilityText: {
-    fontSize: 9,
-    color: "#FFFFFF",
-    fontWeight: "700",
-    letterSpacing: 0.2,
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
+
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 5,
-    minWidth: 55,
-    alignItems: "center",
-  },
-  statusText: {
-    fontSize: 8,
-    color: "#FFFFFF",
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    textAlign: "center",
-  },
-  actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  borrowButton: {
-    backgroundColor: "#2563EB",
-  },
-  returnButton: {
-    backgroundColor: "#DC2626",
-  },
-  pendingButton: {
-    backgroundColor: "#F59E0B",
-  },
-  logoutButton: {
-    backgroundColor: "#DC2626",
-  },
-  disabledButton: {
-    backgroundColor: "#CBD5E1",
-    opacity: 0.6,
-  },
-  viewDetailsButton: {
-    backgroundColor: "#2563EB",
-    marginBottom: 5,
-  },
-  closeDetailsButton: {
-    backgroundColor: "#71829E",
-  },
-  buttonText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    letterSpacing: 0.2,
-  },
-  fineContainer: {
-    backgroundColor: "#FEF2F2",
-    padding: 8,
-    borderRadius: 8,
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: "#FECACA",
-  },
-  fineText: {
-    fontSize: 10,
-    color: "#DC2626",
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  notificationsList: {
-    marginTop: 8,
-  },
-  notificationCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#EAEFF7",
-  },
-  unreadNotification: {
-    borderLeftWidth: 3,
-    borderLeftColor: "#2563EB",
-    backgroundColor: "#F8FAFC",
-  },
-  notificationHeader: {
-    marginBottom: 8,
-  },
-  notificationTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#0F172A",
-    marginBottom: 8,
-  },
-  notificationActions: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 8,
-  },
-  notificationAction: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "#EFF6FF",
+    paddingVertical: 4,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#D0E3FF",
-  },
-  notificationActionText: {
-    fontSize: 10,
-    color: "#2563EB",
-    fontWeight: "600",
-  },
-  notificationMessage: {
-    fontSize: 12,
-    color: "#475569",
-    lineHeight: 16,
-    marginBottom: 6,
-  },
-  notificationTime: {
-    fontSize: 10,
-    color: "#94A3B8",
-    fontWeight: "500",
-  },
-  overdueIndicator: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "#DC2626",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  overdueIndicatorText: {
-    fontSize: 8,
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 50,
-    paddingHorizontal: 20,
-  },
-  emptyStateCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-  },
-  emptyStateIcon: {
-    fontSize: 32,
-    color: "#A8B5C9",
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#334155",
-    marginBottom: 6,
-    textAlign: "center",
-  },
-  emptyStateSubtext: {
-    fontSize: 12,
-    color: "#687489",
-    textAlign: "center",
-  },
-  profileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#EAEFF7",
-  },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 22,
-    paddingBottom: 16,
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#EFF2F7",
-  },
-  avatarCircle: {
-    width: 75,
-    height: 75,
-    borderRadius: 37.5,
-    backgroundColor: "#2563EB",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 18,
-    position: "relative",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
-    flexShrink: 0,
-  },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  avatarRing: {
-    position: "absolute",
-    width: 87,
-    height: 87,
-    borderRadius: 43.5,
-    borderWidth: 2,
-    borderColor: "#2563EB",
-    top: -6,
-    left: -6,
-    opacity: 0.2,
-  },
-  profileInfo: {
-    flex: 1,
-    justifyContent: "flex-start",
-    paddingTop: 2,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#0F172A",
-    marginBottom: 6,
-    lineHeight: 22,
-  },
-  profileEmail: {
-    fontSize: 13,
-    color: "#687489",
-    marginBottom: 8,
-    fontWeight: "500",
-    lineHeight: 16,
-  },
-  profileRole: {
-    fontSize: 12,
-    color: "#687489",
-    marginBottom: 10,
-    fontWeight: "500",
-    lineHeight: 15,
-  },
-  profileBadge: {
-    backgroundColor: "#10B981",
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-  },
-  profileBadgeText: {
-    fontSize: 11,
-    color: "#FFFFFF",
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  profileDetails: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 10,
-    padding: 14,
-    marginVertical: 14,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "#EFF2F7",
-  },
-  detailItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  loadingContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 50,
-  },
-  loadingSpinner: {
-    flexDirection: "row",
-    marginBottom: 14,
-    gap: 6,
-  },
-  loadingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#2563EB",
-  },
-  loadingDot2: {
-    backgroundColor: "#10B981",
-  },
-  loadingDot3: {
-    backgroundColor: "#DC2626",
-  },
-  loadingText: {
-    fontSize: 13,
-    color: "#687489",
-    fontWeight: "500",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
-  receiptModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  receiptContainer: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    width: '100%',
-    maxHeight: '85%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#EAEFF7',
-  },
-  receiptHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFF2F7',
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  receiptHeaderText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-    flex: 1,
-    letterSpacing: 0.2,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0F4F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  closeButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  receiptScrollView: {
-    maxHeight: 400,
-  },
-  receiptBody: {
-    padding: 14,
-  },
-  receiptSection: {
-    marginBottom: 10,
-  },
-  receiptLabel: {
+  statusText: {
+    color: '#FFF',
     fontSize: 10,
     fontWeight: '700',
-    color: '#687489',
-    marginBottom: 3,
-    letterSpacing: 0.2,
   },
-  receiptValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0F172A',
+
+  // Borrow ID Card
+  borrowIdCard: {
+    backgroundColor: '#F0F4FF',
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginBottom: 10,
   },
-  receiptBookTitle: {
-    fontSize: 14,
+
+  borrowIdCardLabel: {
+    fontSize: 9,
+    color: '#007AFF',
     fontWeight: '700',
-    color: '#2563EB',
+    letterSpacing: 0.5,
+  },
+
+  borrowIdCardValue: {
+    fontSize: 11,
+    color: '#333',
+    fontWeight: '700',
     marginTop: 2,
   },
-  receiptDivider: {
-    height: 1,
-    backgroundColor: '#E8EEF5',
-    marginVertical: 10,
-  },
-  receiptDividerThick: {
-    height: 2,
-    backgroundColor: '#0F172A',
-    marginVertical: 10,
-  },
-  receiptFooterSection: {
-    backgroundColor: '#F8FAFC',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E8EEF5',
-  },
-  receiptFooterText: {
-    fontSize: 12,
-    color: '#334155',
-    marginBottom: 6,
-    fontWeight: '600',
-  },
-  receiptFooterNote: {
-    fontSize: 10,
-    color: '#687489',
-    fontStyle: 'italic',
-  },
-  receiptBarcode: {
-    alignItems: 'center',
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E8EEF5',
-  },
-  barcodeLines: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  barcodeLine: {
-    height: 35,
-    backgroundColor: '#0F172A',
-    marginHorizontal: 0.4,
-  },
-  barcodeText: {
-    fontSize: 10,
-    color: '#0F172A',
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+
+  borrowIdCardNote: {
+    fontSize: 9,
+    color: '#888',
+    marginTop: 4,
   },
 
-  bookDetailsModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  bookDetailsContainer: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    width: '100%',
-    maxHeight: '90%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#EAEFF7',
-  },
-  bookDetailsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFF2F7',
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  bookDetailsHeaderText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-    flex: 1,
-    letterSpacing: 0.2,
-  },
-  bookDetailsScrollView: {
-    maxHeight: 480,
-  },
-  bookDetailsBody: {
-    padding: 14,
-  },
-  bookImageContainer: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  bookDetailsImage: {
-    width: 120,
-    height: 160,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.07,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  bookDetailsImagePlaceholder: {
-    width: 120,
-    height: 160,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed',
-  },
-  bookDetailsImagePlaceholderText: {
-    fontSize: 36,
-    color: '#A8B5C9',
-  },
-  bookInfoSection: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  bookDetailsTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F172A',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  bookDetailsAuthor: {
-    fontSize: 13,
-    color: '#687489',
-    marginBottom: 10,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  statusLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  statusBadgeLarge: {
+  // Action Buttons
+  actionButton: {
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 6,
-    minWidth: 80,
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
-  },
-  statusTextLarge: {
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  
-  borrowIdSection: {
-    marginBottom: 12,
-  },
-  borrowIdContainer: {
-    backgroundColor: '#EFF6FF',
-    padding: 12,
-    borderRadius: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: '#2563EB',
-    borderWidth: 1,
-    borderColor: '#D0E3FF',
-  },
-  borrowIdLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#2563EB',
-    marginBottom: 4,
-    letterSpacing: 0.2,
-  },
-  borrowIdValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  borrowIdNote: {
-    fontSize: 11,
-    color: '#687489',
-    fontStyle: 'italic',
-  },
-  
-  sectionDivider: {
-    height: 1,
-    backgroundColor: '#E8EEF5',
-    marginVertical: 12,
-  },
-  detailsSection: {
-    marginBottom: 12,
-  },
-  descriptionSection: {
-    marginBottom: 12,
-  },
-  bookDescription: {
-    fontSize: 12,
-    color: '#334155',
-    lineHeight: 16,
-    textAlign: 'left',
-  },
-  borrowingSection: {
-    marginBottom: 12,
-  },
-  overdueText: {
-    color: '#DC2626',
-    fontWeight: '700',
-  },
-  fineAmount: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#DC2626',
-  },
-  fineLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#DC2626',
-  },
-  bookDetailsActions: {
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E8EEF5',
-    gap: 8,
-    backgroundColor: '#F8FAFC',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    justifyContent: 'center',
+    marginBottom: 8,
+    flexDirection: 'row',
   },
 
-  // Edit Profile Modal Styles
+  viewDetailsButton: {
+    backgroundColor: '#E3F2FD',
+  },
+
+  borrowButton: {
+    backgroundColor: '#007AFF',
+  },
+
+  returnButton: {
+    backgroundColor: '#34C759',
+  },
+
+  pendingButton: {
+    backgroundColor: '#FFA500',
+  },
+
+  disabledButton: {
+    opacity: 0.5,
+  },
+
+  buttonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFF',
+    marginLeft: 6,
+  },
+
+  viewDetailsButtonText: {
+    color: '#007AFF',
+  },
+
+  // Modal Styles
   editProfileModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
   },
+
   editProfileContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    width: '90%',
-    maxHeight: '85%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#EAEFF7',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '92%',
+    overflow: 'hidden',
   },
+
   editProfileHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#EFF2F7',
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  editProfileHeaderText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: 0.2,
-  },
-  editProfileScrollView: {
-    maxHeight: 400,
-  },
-  editProfileBody: {
-    padding: 16,
-  },
-  editProfileActions: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#EFF2F7',
-    gap: 10,
-    backgroundColor: '#F8FAFC',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    borderBottomColor: '#E8E8E8',
   },
 
-  // Profile Image Section
+  editProfileHeaderText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  closeButton: {
+    padding: 8,
+  },
+
+  closeButtonText: {
+    fontSize: 24,
+    color: '#333',
+  },
+
+  editProfileScrollView: {
+    flex: 1,
+  },
+
+  editProfileBody: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+
   profileImageSection: {
     alignItems: 'center',
     marginBottom: 24,
   },
+
   profileImageContainer: {
     position: 'relative',
-    marginBottom: 10,
+    marginBottom: 12,
   },
+
   profileImageLarge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#007AFF',
   },
+
   profileImagePlaceholderLarge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#2563EB',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#E3F2FD',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#007AFF',
   },
+
   profileImagePlaceholderTextLarge: {
-    color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 48,
     fontWeight: '700',
+    color: '#007AFF',
   },
+
   cameraIconOverlay: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#2563EB',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cameraIcon: {
-    fontSize: 16,
-  },
-  profileImageHint: {
-    fontSize: 12,
-    color: '#687489',
-    fontWeight: '600',
-    marginTop: 8,
   },
 
-  // Form Styles
+  profileImageHint: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+
   formSection: {
-    gap: 16,
+    marginTop: 12,
   },
+
   inputGroup: {
-    gap: 8,
+    marginBottom: 16,
   },
+
   inputLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: 0.1,
-  },
-  textInput: {
-    borderWidth: 1.5,
-    borderColor: '#D0D8E5',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    fontSize: 13,
-    backgroundColor: '#FAFBFC',
-    color: '#0F172A',
-    fontWeight: '500',
-  },
-  disabledInput: {
-    backgroundColor: '#F0F4F9',
-    color: '#687489',
-    borderColor: '#E8EEF5',
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
+    color: '#333',
+    marginBottom: 8,
   },
 
-  // Gender Options
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: '#333',
+    backgroundColor: '#F8F9FA',
+  },
+
+  disabledInput: {
+    backgroundColor: '#E8E8E8',
+    color: '#888',
+  },
+
+  textArea: {
+    height: 90,
+    textAlignVertical: 'top',
+    paddingTop: 12,
+  },
+
   genderOptions: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'space-between',
   },
+
   genderOption: {
     flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,
     borderWidth: 1.5,
-    borderColor: '#D0D8E5',
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#FAFBFC',
+    marginHorizontal: 4,
+    backgroundColor: '#F8F9FA',
   },
+
   genderOptionSelected: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: '#E3F2FD',
+    borderColor: '#007AFF',
   },
+
   genderOptionText: {
     fontSize: 12,
-    color: '#687489',
     fontWeight: '600',
+    color: '#666',
   },
+
   genderOptionTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: '#007AFF',
   },
 
-  // Button Styles
+  editProfileActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+    gap: 12,
+  },
+
   saveButton: {
-    backgroundColor: '#2563EB',
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: '#D0D8E5',
-  },
-  cancelButtonText: {
-    color: '#687489',
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    fontSize: 13,
+    flex: 1,
+    backgroundColor: '#007AFF',
   },
 
-  // Profile Section Styles
-  avatarCircleLarge: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#2563EB',
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#E8E8E8',
+  },
+
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Book Details Modal
+  bookDetailsModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+
+  bookDetailsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '92%',
+  },
+
+  bookDetailsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+
+  bookDetailsHeaderText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  bookDetailsScrollView: {
+    flex: 1,
+  },
+
+  bookDetailsBody: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+
+  bookImageContainer: {
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+
+  bookDetailsImage: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#E8E8E8',
+  },
+
+  bookDetailsImagePlaceholder: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#E3F2FD',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
   },
-  avatarImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+
+  bookDetailsImagePlaceholderText: {
+    fontSize: 60,
   },
-  avatarTextLarge: {
-    color: '#FFFFFF',
-    fontSize: 32,
+
+  bookInfoSection: {
+    marginBottom: 16,
+  },
+
+  bookDetailsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 6,
+  },
+
+  bookDetailsAuthor: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 12,
+  },
+
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+  },
+
+  statusBadgeLarge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+
+  statusTextLarge: {
+    color: '#FFF',
+    fontSize: 11,
     fontWeight: '700',
   },
-  avatarRingLarge: {
-    position: "absolute",
-    width: 105,
-    height: 105,
-    borderRadius: 52.5,
-    borderWidth: 2,
-    borderColor: '#2563EB',
-    top: -7.5,
-    left: -7.5,
-    opacity: 0.2,
+
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#E8E8E8',
+    marginVertical: 16,
   },
+
+  borrowIdSection: {
+    marginBottom: 8,
+  },
+
+  borrowIdContainer: {
+    backgroundColor: '#F0F4FF',
+    borderLeftWidth: 4,
+    borderLeftColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+
+  borrowIdLabel: {
+    fontSize: 10,
+    color: '#007AFF',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  borrowIdValue: {
+    fontSize: 13,
+    color: '#333',
+    fontWeight: '700',
+    marginTop: 6,
+  },
+
+  borrowIdNote: {
+    fontSize: 10,
+    color: '#888',
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+
+  detailsSection: {
+    marginBottom: 8,
+  },
+
+  descriptionSection: {
+    marginBottom: 8,
+  },
+
+  bookDescription: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 18,
+  },
+
+  borrowingSection: {
+    marginBottom: 8,
+  },
+
+  fineContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFE3E3',
+    borderRadius: 8,
+    marginTop: 8,
+  },
+
+  fineLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF3B30',
+  },
+
+  fineAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FF3B30',
+  },
+
+  fineText: {
+    fontSize: 12,
+    color: '#FF3B30',
+    fontWeight: '700',
+  },
+
+  bookDetailsActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+    gap: 12,
+  },
+
+  closeDetailsButton: {
+    flex: 1,
+    backgroundColor: '#E8E8E8',
+  },
+
+  // Receipt Modal
+  receiptModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+
+  receiptContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '90%',
+  },
+
+  receiptHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#333',
+  },
+
+  receiptHeaderText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  receiptScrollView: {
+    flex: 1,
+  },
+
+  receiptBody: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+
+  receiptSection: {
+    marginBottom: 12,
+  },
+
+  receiptLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#888',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+
+  receiptValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  receiptBookTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  receiptDivider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 12,
+  },
+
+  receiptDividerThick: {
+    height: 2,
+    backgroundColor: '#333',
+    marginVertical: 16,
+  },
+
+  receiptFooterSection: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+
+  receiptFooterText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '600',
+  },
+
+  receiptFooterNote: {
+    fontSize: 11,
+    color: '#007AFF',
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+
+  receiptBarcode: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+
+  barcodeLines: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    marginBottom: 8,
+  },
+
+  barcodeLine: {
+    height: 30,
+    backgroundColor: '#333',
+    marginHorizontal: 1,
+  },
+
+  barcodeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  // Profile Section
+  profileCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  avatarCircleLarge: {
+    position: 'relative',
+    marginRight: 16,
+  },
+
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+
+  avatarTextLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E3F2FD',
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#007AFF',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+  },
+
+  avatarRingLarge: {
+    position: 'absolute',
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    top: -3,
+    left: -3,
+  },
+
+  profileInfo: {
+    flex: 1,
+  },
+
+  profileName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  profileEmail: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+  },
+
+  profileBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+
+  profileBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#007AFF',
+  },
+
+  profileDetails: {
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+  },
+
+  detailItemText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  profileActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
   editProfileButton: {
-    backgroundColor: '#2563EB',
+    flex: 1,
+    backgroundColor: '#007AFF',
+  },
+
+  logoutButton: {
+    flex: 1,
+    backgroundColor: '#FFE3E3',
+  },
+
+  logoutButtonText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+
+  // Notifications
+  notificationsList: {
+    gap: 12,
+  },
+
+  notificationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#E0E0E0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  unreadNotification: {
+    backgroundColor: '#F8F9FA',
+    borderLeftColor: '#007AFF',
+  },
+
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+
+  notificationIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+
+  notificationContent: {
+    flex: 1,
+  },
+
+  notificationTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
+
+  notificationMessage: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+
+  notificationTime: {
+    fontSize: 10,
+    color: '#999',
+  },
+
+  notificationActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+
+  notificationAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#E8E8E8',
+  },
+
+  notificationActionText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 4,
+  },
+
+  overdueIndicator: {
+    backgroundColor: '#FFE3E3',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+
+  overdueIndicatorText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#FF3B30',
+    letterSpacing: 0.5,
+  },
+
+  overdueText: {
+    color: '#FF3B30',
+    fontWeight: '700',
+  },
+
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+
+  emptyStateCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
+  emptyStateIcon: {
+    fontSize: 48,
+  },
+
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 8,
+  },
+
+  emptyStateSubtext: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+
+  // Loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 60,
+  },
+
+  loadingSpinner: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
+  loadingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#007AFF',
+    marginHorizontal: 4,
+  },
+
+  loadingDot2: {
+    opacity: 0.5,
+  },
+
+  loadingDot3: {
+    opacity: 0.25,
+  },
+
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888',
   },
 });

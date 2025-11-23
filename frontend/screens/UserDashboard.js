@@ -13,9 +13,19 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { MaterialCommunityIcons, Feather, FontAwesome5 } from "@expo/vector-icons";
 import API from "../utils/api";
 import styles from "./UserDashboard.styles";
 import * as ImagePicker from 'expo-image-picker';
+
+// Menu items array
+const menuItems = [
+  { id: "available", label: "Available Books", icon: "bookshelf" },
+  { id: "borrowed", label: "Borrowed Books", icon: "book-account" },
+  { id: "history", label: "History", icon: "history" },
+  { id: "notifications", label: "Notifications", icon: "bell" },
+  { id: "profile", label: "Profile", icon: "account" },
+];
 
 export default function UserDashboard({ navigation, route }) {
   const name = route.params?.name || "User";
@@ -70,7 +80,6 @@ export default function UserDashboard({ navigation, route }) {
     }).start();
   }, [activeSection]);
 
-  // Load profile data
   const loadProfileData = async () => {
     try {
       const response = await API.get("/auth/me");
@@ -128,6 +137,10 @@ export default function UserDashboard({ navigation, route }) {
   const handleMenuPress = (section) => {
     setActiveSection(section);
     closeDrawer();
+    
+    setTimeout(() => {
+      loadSectionData();
+    }, 300);
   };
 
   const loadSectionData = async () => {
@@ -150,6 +163,8 @@ export default function UserDashboard({ navigation, route }) {
         case "notifications":
           const notificationsResponse = await API.get("/books/notifications");
           setNotifications(notificationsResponse.data);
+          break;
+        default:
           break;
       }
     } catch (error) {
@@ -272,7 +287,6 @@ export default function UserDashboard({ navigation, route }) {
     }
   };
 
-  // Edit Profile Functions
   const openEditProfile = () => {
     setEditProfileVisible(true);
   };
@@ -308,14 +322,12 @@ export default function UserDashboard({ navigation, route }) {
 
       const formData = new FormData();
       
-      // Append form fields
       if (profileData.name) formData.append('name', profileData.name);
       if (profileData.dob) formData.append('dob', profileData.dob);
       if (profileData.gender) formData.append('gender', profileData.gender);
       if (profileData.address) formData.append('address', profileData.address);
       if (profileData.phone) formData.append('phone', profileData.phone);
 
-      // Append image if selected
       if (selectedImage) {
         const localUri = selectedImage.uri;
         const filename = localUri.split('/').pop();
@@ -338,7 +350,7 @@ export default function UserDashboard({ navigation, route }) {
       Alert.alert("Success", "Profile updated successfully");
       setEditProfileVisible(false);
       setSelectedImage(null);
-      await loadProfileData(); // Refresh profile data
+      await loadProfileData();
       
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -363,13 +375,12 @@ export default function UserDashboard({ navigation, route }) {
               style={styles.closeButton}
               onPress={() => setEditProfileVisible(false)}
             >
-              <Text style={styles.closeButtonText}>✕</Text>
+              <MaterialCommunityIcons name="close" size={24} color="#333" />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.editProfileScrollView} showsVerticalScrollIndicator={false}>
             <View style={styles.editProfileBody}>
-              {/* Profile Image Section */}
               <View style={styles.profileImageSection}>
                 <TouchableOpacity onPress={handleImagePick} style={styles.profileImageContainer}>
                   {(selectedImage?.uri || profileData.profile_image) ? (
@@ -385,13 +396,12 @@ export default function UserDashboard({ navigation, route }) {
                     </View>
                   )}
                   <View style={styles.cameraIconOverlay}>
-                    <Text style={styles.cameraIcon}>📷</Text>
+                    <MaterialCommunityIcons name="camera" size={20} color="#FFF" />
                   </View>
                 </TouchableOpacity>
                 <Text style={styles.profileImageHint}>Tap to change photo</Text>
               </View>
 
-              {/* Form Fields */}
               <View style={styles.formSection}>
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Full Name</Text>
@@ -515,7 +525,7 @@ export default function UserDashboard({ navigation, route }) {
               style={styles.closeButton}
               onPress={() => setBookDetailsVisible(false)}
             >
-              <Text style={styles.closeButtonText}>✕</Text>
+              <MaterialCommunityIcons name="close" size={24} color="#333" />
             </TouchableOpacity>
           </View>
 
@@ -530,7 +540,7 @@ export default function UserDashboard({ navigation, route }) {
                   />
                 ) : (
                   <View style={styles.bookDetailsImagePlaceholder}>
-                    <Text style={styles.bookDetailsImagePlaceholderText}>📚</Text>
+                    <MaterialCommunityIcons name="book" size={60} color="#007AFF" />
                   </View>
                 )}
               </View>
@@ -551,7 +561,6 @@ export default function UserDashboard({ navigation, route }) {
 
               <View style={styles.sectionDivider} />
 
-              {/* Borrow ID Section - Only for borrowed books */}
               {!isAvailableBook && selectedBook?._id && (
                 <View style={styles.borrowIdSection}>
                   <Text style={styles.sectionTitle}>Borrow Information</Text>
@@ -729,7 +738,7 @@ export default function UserDashboard({ navigation, route }) {
               style={styles.closeButton}
               onPress={() => setReceiptVisible(false)}
             >
-              <Text style={styles.closeButtonText}>✕</Text>
+              <MaterialCommunityIcons name="close" size={24} color="#333" />
             </TouchableOpacity>
           </View>
 
@@ -845,11 +854,10 @@ export default function UserDashboard({ navigation, route }) {
                     />
                   ) : (
                     <View style={styles.bookImagePlaceholder}>
-                      <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                      <MaterialCommunityIcons name="book" size={50} color="#007AFF" />
                     </View>
                   )}
                 </TouchableOpacity>
-                
                 <View style={styles.bookCornerDecoration} />
                 <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
                 <Text style={styles.bookAuthor}>by {book.author}</Text>
@@ -936,7 +944,7 @@ export default function UserDashboard({ navigation, route }) {
                       />
                     ) : (
                       <View style={styles.bookImagePlaceholder}>
-                        <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                        <MaterialCommunityIcons name="book" size={50} color="#007AFF" />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -946,7 +954,6 @@ export default function UserDashboard({ navigation, route }) {
                   <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
                   <View style={styles.divider} />
                   
-                  {/* Borrow ID Display */}
                   <View style={styles.borrowIdCard}>
                     <Text style={styles.borrowIdCardLabel}>BORROW ID</Text>
                     <Text style={styles.borrowIdCardValue}>{record._id}</Text>
@@ -1049,7 +1056,7 @@ export default function UserDashboard({ navigation, route }) {
                     />
                   ) : (
                     <View style={styles.bookImagePlaceholder}>
-                      <Text style={styles.bookImagePlaceholderText}>📚</Text>
+                      <MaterialCommunityIcons name="book" size={50} color="#007AFF" />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -1059,7 +1066,6 @@ export default function UserDashboard({ navigation, route }) {
                 <Text style={styles.bookAuthor}>by {record.book?.author}</Text>
                 <View style={styles.divider} />
                 
-                {/* Borrow ID Display for History */}
                 <View style={styles.borrowIdCard}>
                   <Text style={styles.borrowIdCardLabel}>BORROW ID</Text>
                   <Text style={styles.borrowIdCardValue}>{record._id}</Text>
@@ -1132,7 +1138,7 @@ export default function UserDashboard({ navigation, route }) {
       {notifications.length === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyStateCircle}>
-            <Text style={styles.emptyStateIcon}>🔔</Text>
+            <MaterialCommunityIcons name="bell-off" size={60} color="#ccc" />
           </View>
           <Text style={styles.emptyStateText}>No new notifications</Text>
           <Text style={styles.emptyStateSubtext}>
@@ -1150,293 +1156,276 @@ export default function UserDashboard({ navigation, route }) {
               ]}
             >
               <View style={styles.notificationHeader}>
-                <Text style={styles.notificationTitle}>{notification.title}</Text>
-                <View style={styles.notificationActions}>
-                  {!notification.is_read && (
-                    <TouchableOpacity 
-                      onPress={() => markNotificationAsRead(notification._id)}
-                      style={styles.notificationAction}
-                    >
-                      <Text style={styles.notificationActionText}>Mark Read</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity 
-                    onPress={() => deleteNotification(notification._id)}
-                    style={styles.notificationAction}
-                    >
-                      <Text style={styles.notificationActionText}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <Text style={styles.notificationMessage}>{notification.message}</Text>
-                <Text style={styles.notificationTime}>
-                  {new Date(notification.created_at).toLocaleString()}
-                </Text>
-                {notification.type === "overdue" && (
-                  <View style={styles.overdueIndicator}>
-                    <Text style={styles.overdueIndicatorText}>OVERDUE</Text>
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
-      </Animated.View>
-    );
-
-    const renderProfileSection = () => (
-      <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.headerAccent} />
-          <Text style={styles.sectionTitle}>Profile Settings</Text>
-        </View>
-        
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarCircleLarge}>
-              {profileData.profile_image ? (
-                <Image 
-                  source={{ uri: profileData.profile_image }} 
-                  style={styles.avatarImage}
+                <MaterialCommunityIcons 
+                  name={notification.type === "overdue" ? "alert-circle" : "information"} 
+                  size={24} 
+                  color={notification.type === "overdue" ? "#FF3B30" : "#007AFF"} 
+                  style={styles.notificationIcon}
                 />
-              ) : (
-                <Text style={styles.avatarTextLarge}>
-                  {profileData.name?.charAt(0).toUpperCase() || 'U'}
-                </Text>
-              )}
-              <View style={styles.avatarRingLarge} />
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{profileData.name || name}</Text>
-              <Text style={styles.profileEmail}>{profileData.email}</Text>
-              <View style={styles.profileBadge}>
-                <Text style={styles.profileBadgeText}>
-                  {profileData.role?.toUpperCase() || 'MEMBER'}
-                </Text>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationTitle}>{notification.title}</Text>
+                  <Text style={styles.notificationMessage}>{notification.message}</Text>
+                  <Text style={styles.notificationTime}>
+                    {new Date(notification.created_at).toLocaleString()}
+                  </Text>
+                </View>
               </View>
+              <View style={styles.notificationActions}>
+                {!notification.is_read && (
+                  <TouchableOpacity 
+                    onPress={() => markNotificationAsRead(notification._id)}
+                    style={styles.notificationAction}
+                  >
+                    <MaterialCommunityIcons name="check" size={18} color="#007AFF" />
+                    <Text style={styles.notificationActionText}>Mark Read</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity 
+                  onPress={() => deleteNotification(notification._id)}
+                  style={styles.notificationAction}
+                >
+                  <MaterialCommunityIcons name="delete" size={18} color="#FF3B30" />
+                  <Text style={styles.notificationActionText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+              {notification.type === "overdue" && (
+                <View style={styles.overdueIndicator}>
+                  <Text style={styles.overdueIndicatorText}>OVERDUE</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+    </Animated.View>
+  );
+
+  const renderProfileSection = () => (
+    <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.headerAccent} />
+        <Text style={styles.sectionTitle}>Profile Settings</Text>
+      </View>
+      
+      <View style={styles.profileCard}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarCircleLarge}>
+            {profileData.profile_image ? (
+              <Image 
+                source={{ uri: profileData.profile_image }} 
+                style={styles.avatarImage}
+              />
+            ) : (
+              <Text style={styles.avatarTextLarge}>
+                {profileData.name?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            )}
+            <View style={styles.avatarRingLarge} />
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{profileData.name || name}</Text>
+            <Text style={styles.profileEmail}>{profileData.email}</Text>
+            <View style={styles.profileBadge}>
+              <Text style={styles.profileBadgeText}>
+                {profileData.role?.toUpperCase() || 'MEMBER'}
+              </Text>
             </View>
           </View>
+        </View>
 
-          {/* Profile Details */}
-          <View style={styles.profileDetails}>
-            <View style={styles.detailItem}>
+        <View style={styles.profileDetails}>
+          <View style={styles.detailItem}>
+            <MaterialCommunityIcons name="cake" size={20} color="#007AFF" />
+            <View style={styles.detailItemText}>
               <Text style={styles.detailLabel}>Date of Birth</Text>
               <Text style={styles.detailValue}>{profileData.dob || 'Not set'}</Text>
             </View>
-            
-            <View style={styles.detailItem}>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <MaterialCommunityIcons name="gender-male-female" size={20} color="#007AFF" />
+            <View style={styles.detailItemText}>
               <Text style={styles.detailLabel}>Gender</Text>
               <Text style={styles.detailValue}>{profileData.gender || 'Not set'}</Text>
             </View>
-            
-            <View style={styles.detailItem}>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <MaterialCommunityIcons name="phone" size={20} color="#007AFF" />
+            <View style={styles.detailItemText}>
               <Text style={styles.detailLabel}>Phone</Text>
               <Text style={styles.detailValue}>{profileData.phone || 'Not set'}</Text>
             </View>
-            
-            <View style={styles.detailItem}>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <MaterialCommunityIcons name="map-marker" size={20} color="#007AFF" />
+            <View style={styles.detailItemText}>
               <Text style={styles.detailLabel}>Address</Text>
               <Text style={styles.detailValue}>{profileData.address || 'Not set'}</Text>
             </View>
-            
-            <View style={styles.detailItem}>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <MaterialCommunityIcons name="calendar" size={20} color="#007AFF" />
+            <View style={styles.detailItemText}>
               <Text style={styles.detailLabel}>Member Since</Text>
               <Text style={styles.detailValue}>
                 {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'N/A'}
               </Text>
             </View>
           </View>
+        </View>
 
-          <View style={styles.profileActions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.editProfileButton]}
-              onPress={openEditProfile}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>Edit Profile</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.actionButton, styles.logoutButton]}
-              onPress={() => navigation.replace("Login")}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.logoutButtonText}>Logout</Text>
-            </TouchableOpacity>
+        <View style={styles.profileActions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.editProfileButton]}
+            onPress={openEditProfile}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="pencil" size={20} color="#FFF" />
+            <Text style={styles.buttonText}>Edit Profile</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.actionButton, styles.logoutButton]}
+            onPress={() => navigation.replace("Login")}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="logout" size={20} color="#FF3B30" />
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
+  );
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner}>
+            <View style={styles.loadingDot} />
+            <View style={[styles.loadingDot, styles.loadingDot2]} />
+            <View style={[styles.loadingDot, styles.loadingDot3]} />
           </View>
+          <Text style={styles.loadingText}>Loading your library...</Text>
+        </View>
+      );
+    }
+
+    switch (activeSection) {
+      case "available":
+        return renderAvailableBooks();
+      case "borrowed":
+        return renderBorrowedBooks();
+      case "history":
+        return renderBorrowingHistory();
+      case "notifications":
+        return renderNotifications();
+      case "profile":
+        return renderProfileSection();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {isDrawerOpen && (
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={closeDrawer}
+        />
+      )}
+
+      <Animated.View
+        style={[
+          styles.sidebar,
+          {
+            transform: [{ translateX: drawerAnim }],
+          },
+        ]}
+      >
+        <View style={styles.logoContainer}>
+          <View style={styles.logoImageContainer}>
+            <Image 
+              source={require('../assets/images/TUP.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.libraryName}>IT Thesis Library</Text>
+          <View style={styles.logoUnderline} />
+        </View>
+        
+        <View style={styles.menu}>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.menuItem, activeSection === item.id && styles.activeMenuItem]}
+              onPress={() => handleMenuPress(item.id)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemContent}>
+                <MaterialCommunityIcons 
+                  name={item.icon} 
+                  size={22} 
+                  color={activeSection === item.id ? "#007AFF" : "#666"}
+                  style={styles.menuIcon}
+                />
+                <View style={styles.menuTextContainer}>
+                  <Text style={[styles.menuText, activeSection === item.id && styles.activeMenuText]}>
+                    {item.label}
+                  </Text>
+                  {item.id === "notifications" && notifications.filter(n => !n.is_read).length > 0 && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>
+                        {notifications.filter(n => !n.is_read).length}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              {activeSection === item.id && <View style={styles.activeIndicator} />}
+            </TouchableOpacity>
+          ))}
         </View>
       </Animated.View>
-    );
 
-    const renderContent = () => {
-      if (loading) {
-        return (
-          <View style={styles.loadingContainer}>
-            <View style={styles.loadingSpinner}>
-              <View style={styles.loadingDot} />
-              <View style={[styles.loadingDot, styles.loadingDot2]} />
-              <View style={[styles.loadingDot, styles.loadingDot3]} />
-            </View>
-            <Text style={styles.loadingText}>Loading your library...</Text>
-          </View>
-        );
-      }
-
-      switch (activeSection) {
-        case "available":
-          return renderAvailableBooks();
-        case "borrowed":
-          return renderBorrowedBooks();
-        case "history":
-          return renderBorrowingHistory();
-        case "notifications":
-          return renderNotifications();
-        case "profile":
-          return renderProfileSection();
-        default:
-          return null;
-      }
-    };
-
-    return (
-      <View style={styles.container}>
-        {isDrawerOpen && (
-          <TouchableOpacity
-            style={styles.overlay}
-            activeOpacity={1}
-            onPress={closeDrawer}
-          />
-        )}
-
-        <Animated.View
-          style={[
-            styles.sidebar,
-            {
-              transform: [{ translateX: drawerAnim }],
-            },
-          ]}
-        >
-          <View style={styles.logoContainer}>
-            <View style={styles.logoImageContainer}>
-              <Image 
-                source={require('../assets/images/TUP.png')} 
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.libraryName}>IT Thesis Library</Text>
-            <View style={styles.logoUnderline} />
-          </View>
-          
-          <View style={styles.menu}>
-            <TouchableOpacity
-              style={[styles.menuItem, activeSection === "available" && styles.activeMenuItem]}
-              onPress={() => handleMenuPress("available")}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemContent}>
-                {activeSection === "available" && <View style={styles.menuIndicator} />}
-                <Text style={[styles.menuText, activeSection === "available" && styles.activeMenuText]}>
-                  Available Books
-                </Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.menuItem, activeSection === "borrowed" && styles.activeMenuItem]}
-              onPress={() => handleMenuPress("borrowed")}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemContent}>
-                {activeSection === "borrowed" && <View style={styles.menuIndicator} />}
-                <Text style={[styles.menuText, activeSection === "borrowed" && styles.activeMenuText]}>
-                  My Borrowed Books
-                </Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.menuItem, activeSection === "history" && styles.activeMenuItem]}
-              onPress={() => handleMenuPress("history")}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemContent}>
-                {activeSection === "history" && <View style={styles.menuIndicator} />}
-                <Text style={[styles.menuText, activeSection === "history" && styles.activeMenuText]}>
-                  Borrowing History
-                </Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.menuItem, activeSection === "notifications" && styles.activeMenuItem]}
-              onPress={() => handleMenuPress("notifications")}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemContent}>
-                {activeSection === "notifications" && <View style={styles.menuIndicator} />}
-                <Text style={[styles.menuText, activeSection === "notifications" && styles.activeMenuText]}>
-                  Notifications
-                  {notifications.filter(n => !n.is_read).length > 0 && (
-                    <Text style={styles.notificationBadge}>
-                      {" "}({notifications.filter(n => !n.is_read).length})
-                    </Text>
-                  )}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.menuItem, activeSection === "profile" && styles.activeMenuItem]}
-              onPress={() => handleMenuPress("profile")}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuItemContent}>
-                {activeSection === "profile" && <View style={styles.menuIndicator} />}
-                <Text style={[styles.menuText, activeSection === "profile" && styles.activeMenuText]}>
-                  Profile Settings
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.menuButton} 
-              onPress={toggleDrawer}
-              activeOpacity={0.7}
-            >
-              <View style={styles.hamburger}>
-                <View style={styles.hamburgerLine} />
-                <View style={styles.hamburgerLine} />
-                <View style={styles.hamburgerLine} />
-              </View>
-            </TouchableOpacity>
-            <View style={styles.headerText}>
-              <Text style={styles.welcomeTitle}>Welcome back, {profileData.name || name}</Text>
-              <Text style={styles.welcomeSubtitle}>Explore your literary journey</Text>
-            </View>
-          </View>
-          <ScrollView 
-            style={styles.scrollView} 
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={['#007AFF']}
-              />
-            }
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={toggleDrawer}
+            activeOpacity={0.7}
           >
-            {renderContent()}
-          </ScrollView>
+            <MaterialCommunityIcons name="menu" size={28} color="#333" />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.welcomeTitle}>Welcome back, {profileData.name || name}</Text>
+            <Text style={styles.welcomeSubtitle}>Explore your literary journey</Text>
+          </View>
         </View>
-
-        {renderBookDetailsModal()}
-        {renderReceipt()}
-        {renderEditProfileModal()}
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#007AFF']}
+            />
+          }
+        >
+          {renderContent()}
+        </ScrollView>
       </View>
-    );
+
+      {renderBookDetailsModal()}
+      {renderReceipt()}
+      {renderEditProfileModal()}
+    </View>
+  );
 }

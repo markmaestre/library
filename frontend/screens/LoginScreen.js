@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, Animated } from "react-native";
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, Image } from "react-native";
 import API from "../utils/api";
 
 export default function LoginScreen({ navigation }) {
@@ -70,12 +70,13 @@ export default function LoginScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.headerSection}>
-        <View style={styles.bookshelf}>
-          <View style={[styles.book, { backgroundColor: "#8B4513", height: 45 }]} />
-          <View style={[styles.book, { backgroundColor: "#654321", height: 55 }]} />
-          <View style={[styles.book, { backgroundColor: "#A0522D", height: 50 }]} />
-          <View style={[styles.book, { backgroundColor: "#6B4423", height: 48 }]} />
-        </View>
+        {/* TUP Logo */}
+        <Image 
+          source={require('../assets/images/TUP.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        
         <Text style={styles.title}>Library Portal</Text>
         <Text style={styles.subtitle}>Access your reading journey</Text>
       </View>
@@ -172,41 +173,35 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F1E8",
+    backgroundColor: "#F0F8FF", // Sky blue background
     justifyContent: "space-between",
   },
   headerSection: {
-    paddingTop: 60,
+    paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 30,
     alignItems: "center",
   },
-  bookshelf: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 6,
-    marginBottom: 20,
-  },
-  book: {
-    width: 18,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: "#5C4033",
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 10,
   },
   title: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#2C1810",
+    color: "#007AFF", // Sky blue color
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B5A4A",
+    color: "#007AFF", // Sky blue color
     fontWeight: "400",
+    opacity: 0.8,
   },
   formCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFFFFF", // White background
     marginHorizontal: 20,
     borderRadius: 16,
     padding: 24,
@@ -223,47 +218,46 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#3D3027",
+    color: "#007AFF", // Sky blue color
     marginBottom: 8,
     letterSpacing: 0.3,
   },
   input: {
     borderWidth: 2,
-    borderColor: "#E0D5C7",
+    borderColor: "#E0F0FF", // Light sky blue border
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
-    color: "#2C1810",
-    backgroundColor: "#FAFAF8",
-    transition: "all 0.3s ease",
+    color: "#333333",
+    backgroundColor: "#F8FBFF", // Very light sky blue background
   },
   inputFocused: {
-    borderColor: "#8B6F47",
+    borderColor: "#007AFF", // Sky blue border when focused
     backgroundColor: "#FFFFFF",
   },
   inputError: {
-    borderColor: "#C44536",
+    borderColor: "#FF3B30", // Red for errors
   },
   errorText: {
-    color: "#C44536",
+    color: "#FF3B30",
     fontSize: 13,
     marginTop: 6,
     fontWeight: "500",
   },
   loginButton: {
-    backgroundColor: "#6B5A4A",
+    backgroundColor: "#007AFF", // Sky blue background
     borderRadius: 10,
     padding: 16,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   loginButtonDisabled: {
-    backgroundColor: "#9D8B7A",
+    backgroundColor: "#66B2FF", // Lighter sky blue when disabled
     opacity: 0.7,
   },
   loginButtonText: {
@@ -280,23 +274,25 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E0D5C7",
+    backgroundColor: "#E0F0FF", // Light sky blue
   },
   dividerText: {
     marginHorizontal: 12,
-    color: "#9D8B7A",
+    color: "#007AFF", // Sky blue color
     fontSize: 14,
     fontWeight: "500",
+    opacity: 0.7,
   },
   registerButton: {
     borderWidth: 2,
-    borderColor: "#6B5A4A",
+    borderColor: "#007AFF", // Sky blue border
     borderRadius: 10,
     padding: 15,
     alignItems: "center",
+    backgroundColor: "transparent",
   },
   registerButtonText: {
-    color: "#6B5A4A",
+    color: "#007AFF", // Sky blue color
     fontSize: 16,
     fontWeight: "600",
     letterSpacing: 0.3,
@@ -305,7 +301,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "#F5F1E8",
+    backgroundColor: "#F0F8FF", // Sky blue background
   },
   msg: {
     textAlign: "center",
@@ -313,10 +309,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   successMsg: {
-    color: "#2D7A3E",
+    color: "#34C759", // Green for success
   },
   failMsg: {
-    color: "#C44536",
+    color: "#FF3B30", // Red for failure
   },
   footer: {
     paddingBottom: 30,
@@ -326,12 +322,14 @@ const styles = StyleSheet.create({
   footerDivider: {
     width: 60,
     height: 2,
-    backgroundColor: "#D0C4B4",
+    backgroundColor: "#007AFF", // Sky blue color
     marginBottom: 12,
+    opacity: 0.5,
   },
   footerText: {
     fontSize: 13,
-    color: "#9D8B7A",
+    color: "#007AFF", // Sky blue color
     textAlign: "center",
+    opacity: 0.7,
   },
 });
